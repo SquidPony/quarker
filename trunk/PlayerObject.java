@@ -15,7 +15,7 @@ public class PlayerObject extends GameObject {
 
     public int hp = 30;
     public int maxHp = 40;
-    public int size = 5;
+    public int size = 1;
     public int level = 1;
     public int nextSize = 8;
 

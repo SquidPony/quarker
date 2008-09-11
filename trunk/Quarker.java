@@ -11,7 +11,6 @@ package my.quarker;
 public class Quarker {
 
     public static void main(String args[]) {
-        System.gc(); //added so that starting a new game right away doesn't leave artifacts
         new Workhorse();
     }
 }
