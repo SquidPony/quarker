@@ -2,6 +2,7 @@ package my.quarker;
 
 import java.awt.Point;
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Random;
 import net.slashie.libjcsi.*;
 import net.slashie.libjcsi.textcomponents.*;
@@ -10,9 +11,7 @@ import net.slashie.util.FileUtil;
 
 public class Workhorse {
     //-------------------Custom variables-------------------//
-    
-    private String versionNumber = "0.03d";
-    
+    private String versionNumber = "0.04";
     private WSwingConsoleInterface mainInterface;
     private TextInformBox infoBox;
     private int infoSpace = 2; //this is the height of the infoBox
@@ -27,7 +26,7 @@ public class Workhorse {
     private Point currentLoc = new Point((mapSizeX / 2), (mapSizeY / 2));
     private XpLevels quarkLevels = new XpLevels();
     private PlayerObject player = new PlayerObject();
-    
+    private ArrayList<CSIColor> colorList = new ArrayList<CSIColor>();
     private String eol = System.getProperty("line.separator");
 
     public Workhorse() {
@@ -40,6 +39,7 @@ public class Workhorse {
         }
 
         //--------for testing screen size-----//
+//        CSIColor tempColor = new CSIColor(50,50,50);
 //        int x =0;
 //        for (int i = 0; i < mainInterface.xdim; i++){
 //            for (int k = 0; k < mainInterface.ydim; k++){
@@ -47,7 +47,10 @@ public class Workhorse {
 //                while (x > 9){
 //                    x = (int)(i/10);
 //                }
-//                mainInterface.print(i,k,String.valueOf(x),Color.WHITE);
+//                tempColor.setR(i*10);
+//                tempColor.setB(k*10);
+//                tempColor.setG(rng.nextInt(100) + 100);
+//                mainInterface.print(i,k,String.valueOf(x),new CSIColor(tempColor));
 //            }
 //        }
 //        statsBox = new TextBox(mainInterface); 
@@ -59,11 +62,37 @@ public class Workhorse {
 //        statsBox.setTitle("Q");
 //        statsBox.setText("This");
 //        statsBox.draw();
-        
+
         initEverything();
         mainInterface.refresh();
         getPlayerName();
         playerTurn();
+    }
+
+    public String askPlayer(int lines, String question, CSIColor color) {
+        int x, y;
+        String answer;
+        mainInterface.saveBuffer();
+
+        DialogBox dialog = new DialogBox(mainInterface, lines, question);
+        dialog.setForeColor(color);
+        x = (mainInterface.xdim / 2) - (dialog.getWidth() / 2);
+        y = (mainInterface.ydim / 2) - (dialog.getHeight() / 2);
+        dialog.setPosition(x, y);
+
+        dialog.setText(question);
+        mainInterface.locateCaret(x + 2, y + lines + 2);
+        dialog.draw();
+        mainInterface.refresh();
+
+        answer = mainInterface.input();
+        mainInterface.restore();
+        mainInterface.refresh();
+        return answer;
+    }
+
+    public String askPlayer(int lines, String question) {
+        return askPlayer(lines, question, CSIColor.WHITE);
     }
 
     private void playerTurn() {// this will get the player's input and launch the method that checks what was input
@@ -181,8 +210,11 @@ public class Workhorse {
     }
 
     private void leaving() {
-        tellPlayer("Thanks for playing.  Press any key to exit now.");
-        mainInterface.inkey();
+        leaving("");
+    }
+
+    private void leaving(String args) {
+        askPlayer(2, args + "Thanks for playing.  Press Enter to exit now.");
         System.exit(0);
     }
 
@@ -278,7 +310,7 @@ public class Workhorse {
 
     private void displayMap() {
 
-        String beol =" XXX ";//end of line for TextBox
+        String beol = " XXX ";//end of line for TextBox
         GameObject nowContents;
         for (int k = 0; k < mapSizeX; k++) {
             for (int i = 0; i < mapSizeY; i++) {
@@ -289,14 +321,19 @@ public class Workhorse {
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.myColor);
         infoBox.draw();
         statsBox.setText(
-            beol
-            + "Health: " + player.hp + beol
-            + "Size: " + player.level + beol
-            + "Xp: " + player.size + beol
-            + "Depth: " + mapLevel + beol
-            );
+            beol + "Health: " + player.hp + beol + "Size: " + player.level + beol + "Xp: " + player.size + beol + "Depth: " + mapLevel + beol);
         statsBox.draw();
         mainInterface.refresh();
+    }
+
+    private CSIColor checkColorList(CSIColor color) {
+        CSIColor tempColor;
+        if (!colorList.contains(color)) {
+            colorList.add(color);
+        }
+        tempColor = colorList.get(colorList.indexOf(color));
+
+        return tempColor;
     }
 
     private void buildDisplay() {
@@ -323,6 +360,7 @@ public class Workhorse {
     }
 
     private void chaosMapping(Point start) { //this will recursively make a random cloud
+        CSIColor tempColor;
         if (recurseNumber > maxRecurse) {
             return;
         }
@@ -330,7 +368,8 @@ public class Workhorse {
         int i = start.x;
         int k = start.y;
         if (!((i > (mapSizeX - 1)) || (k > (mapSizeY - 1)) || (i < 0) || (k < 0))) { //make sure we're not over the edge of the map
-            mapContents[i][k] = new CloudObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            tempColor = checkColorList(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[i][k] = new CloudObject(tempColor);
         }
         recurseNumber++;
         i = i + 1 - rng.nextInt(3);
@@ -516,7 +555,7 @@ public class Workhorse {
     }
 
     private void getPlayerName() {
-        player.myName = mainInterface.askPlayer(1, "Please enter the particle's name. ");
+        player.myName = askPlayer(1, "Please enter the particle's name. ");
         displayMap();
     }
 
@@ -568,7 +607,7 @@ public class Workhorse {
             reader = FileUtil.getReader(fileName);
 
         } catch (IOException ioe) {
-            mainInterface.askPlayer(2,"File does not exist. Press Enter to continue.");
+            askPlayer(2, "File does not exist. Press Enter to continue.");
             displayMap();
         }
         if (!(reader == null)) {
