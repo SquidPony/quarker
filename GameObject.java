@@ -17,7 +17,9 @@ public class GameObject {
     public char represent;
     public boolean passable;
     public CSIColor myColor;
+    public CSIColor backColor;
     private static final CSIColor defaultColor = CSIColor.WHITE;
+    private static final CSIColor defaultBackColor = CSIColor.BLACK;
     public boolean visible = false;
 
     public GameObject() { //default is creating a basic wall
@@ -29,10 +31,15 @@ public class GameObject {
     }
 
     public GameObject(String name, char represent, boolean passable, CSIColor myColor) {
+        this(name, represent, passable, myColor, defaultBackColor);
+    }
+    
+       public GameObject(String name, char represent, boolean passable, CSIColor myColor, CSIColor backColor) {
         this.myName = name;
         this.represent = represent;
         this.passable = passable;
         this.myColor = myColor;
+        this.backColor = backColor;
     }
 
     public String objectOutput() {// this should be overridden to ensure everything is saved correctly
