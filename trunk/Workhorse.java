@@ -37,32 +37,6 @@ public class Workhorse {
             eiie.printStackTrace();
             System.exit(-1);
         }
-
-        //--------for testing screen size-----//
-//        CSIColor tempColor = new CSIColor(50,50,50);
-//        int x =0;
-//        for (int i = 0; i < mainInterface.xdim; i++){
-//            for (int k = 0; k < mainInterface.ydim; k++){
-//                x = k;
-//                while (x > 9){
-//                    x = (int)(i/10);
-//                }
-//                tempColor.setR(i*10);
-//                tempColor.setB(k*10);
-//                tempColor.setG(rng.nextInt(100) + 100);
-//                mainInterface.print(i,k,String.valueOf(x),new CSIColor(tempColor));
-//            }
-//        }
-//        statsBox = new TextBox(mainInterface); 
-//        statsBox.setPosition(0, 0);
-//        statsBox.setWidth(mainInterface.xdim - 1);
-//        statsBox.setHeight(mainInterface.ydim - 1);
-//        statsBox.setBorder(true);
-//        statsBox.clear();
-//        statsBox.setTitle("Q");
-//        statsBox.setText("This");
-//        statsBox.draw();
-
         initEverything();
         mainInterface.refresh();
         getPlayerName();
@@ -195,7 +169,7 @@ public class Workhorse {
         MonsterObject monster = (MonsterObject) mapContents[a][b];
         int attack;
         attack = monster.getAttack();
-        if ((attack + rng.nextInt(10)) > (player.size + rng.nextInt(30))) {
+        if ((attack + rng.nextInt(10)) > (player.level * 3 + rng.nextInt(30))) {
             player.hp -= monster.getDamage();
             tellPlayer("The " + monster.myName + " did " + String.valueOf(monster.getDamage()) + " points of damage to you!");
         } else {
@@ -281,7 +255,7 @@ public class Workhorse {
         int r, i;
 
         r = rng.nextInt(100);
-        r = r + player.size - monster.getDefense();
+        r = r + player.level * 5 - monster.getDefense();
 
         monster.wakeUp(); //attacking will cause the monster to wake up, even if not hit
 
@@ -290,7 +264,7 @@ public class Workhorse {
             tellPlayer("You missed!");
             return false;
         } else {
-            i = rng.nextInt((player.size / 2) + player.size);
+            i = rng.nextInt(player.level * 4);
             if (i <= 0) {
                 tellPlayer("You hit the " + monster.myName + ", but didn't hurt it!");
             } else {
