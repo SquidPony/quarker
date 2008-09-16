@@ -18,7 +18,8 @@ public enum MonsterTypeEnum {
     CHARM("charm quark",'c',false,CSIColor.GRAY,50,50,25,20,5),
     STRANGE("strange quark",'s',false,CSIColor.CYAN,50,25,50,20,5),
     UP("up quark",'u',false,CSIColor.YELLOW,5,2,1,2,1),
-    DOWN("down quark",'d',false,CSIColor.BLUE,5,1,2,2,1);
+    DOWN("down quark",'d',false,CSIColor.BLUE,5,1,2,2,1),
+    ANTIUP("antiup quark", 'u',false,CSIColor.YELLOW,5,2,1,2,1);
     
     String myName;
     char represent;

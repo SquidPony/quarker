@@ -11,25 +11,25 @@ import net.slashie.libjcsi.CSIColor;
  *
  * @author ehoward
  */
-public class CloudObject extends WallObject {
+public class FoldObject extends WallObject {
 
-    public CloudObject(String name, char represent, boolean passable, CSIColor myColor) {
+    public FoldObject(String name, char represent, boolean passable, CSIColor myColor) {
         super(name, represent, passable, myColor);
     }
 
-    public CloudObject() {
-        super("particle cloud", '#', false, CSIColor.BLUE);
+    public FoldObject() {
+        this(CSIColor.BLUE);
     }
 
-    public CloudObject(CSIColor myColor) {
-        super("particle cloud", '#', false, myColor);
+    public FoldObject(CSIColor myColor) {
+        super("spacetime fold", '#', false, myColor);
     }
 
     @Override
     public String objectOutput() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
-        ret = "CloudObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + myColor.getColor() + eol + String.valueOf(visible) + eol + eol;
+        ret = "FoldObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + myColor.getColor() + eol + String.valueOf(visible) + eol + eol;
         return ret;
     }
 

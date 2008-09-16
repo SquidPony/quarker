@@ -171,7 +171,7 @@ public class Workhorse {
         attack = monster.getAttack();
         if ((attack + rng.nextInt(10)) > (player.level * 3 + rng.nextInt(30))) {
             player.hp -= monster.getDamage();
-            tellPlayer("The " + monster.myName + " did " + String.valueOf(monster.getDamage()) + " points of damage to you!");
+            tellPlayer("The " + monster.myName + " reduced your mass by " + String.valueOf(monster.getDamage()) + " electrovolts!");
         } else {
             tellPlayer("The " + monster.myName + " missed you.");
         }
@@ -194,7 +194,7 @@ public class Workhorse {
 
     private void checkStats() {
         if (player.hp < 1) {
-            tellPlayer("You have died.");
+            tellPlayer("You have become massless and unable to effect your surroundings.");
             leaving();
 
         }
@@ -209,10 +209,10 @@ public class Workhorse {
             if (nowObj.down) {
                 buildNewLevel(true);
             } else {
-                tellPlayer("These stairs don't lead down.");
+                tellPlayer("This wormhole leads the other direction in spacetime.");
             }
         } else {
-            tellPlayer("You don't see any stairs here.");
+            tellPlayer("You don't see a wormhole here.");
         }
     }
 
@@ -222,10 +222,10 @@ public class Workhorse {
             if (!(nowObj.down)) {
                 buildNewLevel(false);
             } else {
-                tellPlayer("These stairs don't lead up.");
+                tellPlayer("This wormhole leads the other direction in spacetime.");
             }
         } else {
-            tellPlayer("You don't see any stairs here.");
+            tellPlayer("You don't see a wormhole here.");
         }
     }
 
@@ -242,7 +242,7 @@ public class Workhorse {
                 mapContents[a][b] = new FloorObject();
             }
         } else if (!(mapContents[a][b].passable)) {
-            tellPlayer("You can't walk through the " + mapContents[a][b].myName + "!");
+            tellPlayer("You can't move through the " + mapContents[a][b].myName + "!");
         } else if (mapContents[a][b].passable) {
             currentLoc.move(a, b);
         }
@@ -261,14 +261,14 @@ public class Workhorse {
 
         if (r < 50) {
             //miss
-            tellPlayer("You missed!");
+            tellPlayer("You missed the " + monster.myName);
             return false;
         } else {
             i = rng.nextInt(player.level * 4);
             if (i <= 0) {
-                tellPlayer("You hit the " + monster.myName + ", but didn't hurt it!");
+                tellPlayer("You hit the " + monster.myName + ", but didn't effect it!");
             } else {
-                tellPlayer("You hit the " + monster.myName + " for " + i + " damage.");
+                tellPlayer("You hit the " + monster.myName + " causing it to lose " + i + " electronvolts of mass.");
                 monster.applyDamage(i);
             }
 
@@ -295,7 +295,7 @@ public class Workhorse {
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.myColor);
         infoBox.draw();
         statsBox.setText(
-            beol + "Health: " + player.hp + beol + "Size: " + player.level + beol + "Xp: " + player.size + beol + "Depth: " + mapLevel + beol);
+            beol + "Mass: " + beol +  player.hp + beol + beol + "Size: " + beol + player.level + beol  + beol + "Xp: " + beol + player.size + beol + beol + "Spacetime: " + beol + mapLevel + beol);
         statsBox.draw();
         mainInterface.refresh();
     }
@@ -343,7 +343,7 @@ public class Workhorse {
         int k = start.y;
         if (!((i > (mapSizeX - 1)) || (k > (mapSizeY - 1)) || (i < 0) || (k < 0))) { //make sure we're not over the edge of the map
             tempColor = checkColorList(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
-            mapContents[i][k] = new CloudObject(tempColor);
+            mapContents[i][k] = new FoldObject(tempColor);
         }
         recurseNumber++;
         i = i + 1 - rng.nextInt(3);
@@ -455,11 +455,11 @@ public class Workhorse {
             mapLevel++;
             buildMap();
             mapContents[currentLoc.x][currentLoc.y] = new StairsObject(false);
-            tellPlayer("You have decended the stairs.");
+            tellPlayer("You have travelled through a wormhole and found a new area of spacetime to conquer.");
         } else {
             mapLevel--;
             buildMap();
-            tellPlayer("The stairs collapse behind you.  Looks like you'll have to find another way down.");
+            tellPlayer("You travel backwards through the wormhole to the last spacetime area you were in. The wormhole collapses behind you.");
         }
         displayMap();
     }
@@ -499,12 +499,12 @@ public class Workhorse {
 
         //Here is the initialization of the map with walls along the sides
         for (int i = 0; i < mapSizeX; i++) {
-            mapContents[i][0] = new CloudObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
-            mapContents[i][mapSizeY - 1] = new CloudObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[i][0] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[i][mapSizeY - 1] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
         }
         for (int i = 0; i < mapSizeY; i++) {
-            mapContents[0][i] = new CloudObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
-            mapContents[mapSizeX - 1][i] = new CloudObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[0][i] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[mapSizeX - 1][i] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
         }
 
         floorPlacement();
@@ -567,7 +567,7 @@ public class Workhorse {
             ioe.printStackTrace();
             return;
         }
-        tellPlayer("Game Saved!");
+        tellPlayer("Spacetime Continuum Saved!");
     }
 
     private void loadGame() {
@@ -592,8 +592,8 @@ public class Workhorse {
                         currentType = reader.readLine();
                         if (currentType.equals("GameObject")) {
                             mapContents[i][k] = new GameObject();
-                        } else if (currentType.equals("CloudObject")) {
-                            mapContents[i][k] = new CloudObject();
+                        } else if (currentType.equals("FoldObject")) {
+                            mapContents[i][k] = new FoldObject();
                         } else if (currentType.equals("DebugObject")) {
                             mapContents[i][k] = new DebugObject();
                         } else if (currentType.equals("FloorObject")) {
@@ -634,7 +634,7 @@ public class Workhorse {
 
                 displayMap();
                 mainInterface.refresh();
-                tellPlayer("Game Loaded!");
+                tellPlayer("Spacetime Continuum Restored.");
             } catch (IOException ioe) {
                 System.out.println("Fatal Error reading from " + fileName);
                 ioe.printStackTrace();
