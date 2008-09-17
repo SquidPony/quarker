@@ -2,19 +2,29 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
+
 package my.quarker;
 
-import java.io.*;
 import net.slashie.libjcsi.CSIColor;
 
 /**
  *
- * @author Eben
+ * @author ehoward
  */
-public class FloorObject extends GameObject {
-
+public class FloorObject extends TerrainObject{
+    
+    
+    public static final FloorObject DEFAULT_FLOOR = new FloorObject();
     public FloorObject() {
         super("floor", '.', true);
+    }
+    
+    public FloorObject(String name, char represent, boolean passable){
+        super(name, represent, passable);
+    }
+    
+    public FloorObject(String name, char represent, boolean passable, CSIColor color){
+        super(name, represent, passable, color);
     }
 
     @Override
@@ -23,20 +33,5 @@ public class FloorObject extends GameObject {
         String eol = System.getProperty("line.separator");
         ret = "FloorObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + myColor.getColor() + eol + String.valueOf(visible) + eol + eol;
         return ret;
-    }
-
-    @Override
-    public void pushObject(BufferedReader reader) {
-        try {
-            myName = reader.readLine();
-            represent = reader.readLine().charAt(0);
-            passable = reader.readLine().equalsIgnoreCase("true");
-            myColor = new CSIColor(Integer.valueOf(reader.readLine()));
-            visible = reader.readLine().equalsIgnoreCase("true");
-        } catch (IOException ioe) {
-            System.out.println("Fatal error reading from file!");
-            ioe.printStackTrace();
-            return;
-        }
     }
 }

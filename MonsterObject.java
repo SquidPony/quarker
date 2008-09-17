@@ -12,7 +12,7 @@ import net.slashie.libjcsi.CSIColor;
  *
  * @author Eben
  */
-public class MonsterObject extends GameObject {
+public class MonsterObject extends BaseObject {
 
     private int hp, //current health of the monster
          damage, //amount of base damage the monster will do

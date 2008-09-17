@@ -11,7 +11,7 @@ import net.slashie.libjcsi.CSIColor;
  *
  * @author Eben
  */
-public class WallObject extends GameObject {
+public class WallObject extends TerrainObject {
 
     public WallObject() {
         super("wall", '#', false);

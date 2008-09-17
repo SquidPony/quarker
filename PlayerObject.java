@@ -11,7 +11,7 @@ import net.slashie.libjcsi.CSIColor;
  *
  * @author ehoward
  */
-public class PlayerObject extends GameObject {
+public class PlayerObject extends BaseObject {
 
     public int hp = 30;
     public int maxHp = 40;

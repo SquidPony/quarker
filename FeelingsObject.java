@@ -11,14 +11,14 @@ package my.quarker;
  */
 public class FeelingsObject {
     private AttitudeEnum feelingStatus;
-    private GameObject feelingTowards;
+    private BaseObject feelingTowards;
     
     public FeelingsObject(){
         feelingStatus = null;
         feelingTowards = null;
     }
     
-    public FeelingsObject(AttitudeEnum status, GameObject towards){
+    public FeelingsObject(AttitudeEnum status, BaseObject towards){
         feelingStatus = status;
         feelingTowards = towards;
     }
@@ -27,7 +27,7 @@ public class FeelingsObject {
         return feelingStatus;
     }
     
-    public GameObject GetFeelingTowards(){
+    public BaseObject GetFeelingTowards(){
         return feelingTowards;
     }
     
@@ -35,7 +35,7 @@ public class FeelingsObject {
         feelingStatus = status;
     }
     
-    public void SetFeelingTowards(GameObject towards){
+    public void SetFeelingTowards(BaseObject towards){
         feelingTowards = towards;
     }
 }

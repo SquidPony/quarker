@@ -11,7 +11,7 @@ import net.slashie.libjcsi.*;
  *
  * @author Eben
  */
-public class GameObject {
+public class BaseObject {
 
     public String myName;
     public char represent;
@@ -22,19 +22,19 @@ public class GameObject {
     private static final CSIColor defaultBackColor = CSIColor.BLACK;
     public boolean visible = false;
 
-    public GameObject() { //default is creating a basic wall
+    public BaseObject() { //default is creating a basic wall
         this("unknown", '?', false, defaultColor);
     }
 
-    public GameObject(String name, char represent, boolean passable) {
+    public BaseObject(String name, char represent, boolean passable) {
         this(name, represent, passable, defaultColor);
     }
 
-    public GameObject(String name, char represent, boolean passable, CSIColor myColor) {
+    public BaseObject(String name, char represent, boolean passable, CSIColor myColor) {
         this(name, represent, passable, myColor, defaultBackColor);
     }
     
-       public GameObject(String name, char represent, boolean passable, CSIColor myColor, CSIColor backColor) {
+       public BaseObject(String name, char represent, boolean passable, CSIColor myColor, CSIColor backColor) {
         this.myName = name;
         this.represent = represent;
         this.passable = passable;

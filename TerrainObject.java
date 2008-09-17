@@ -1,39 +1,37 @@
+/*
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package my.quarker;
 
 import java.io.*;
 import net.slashie.libjcsi.CSIColor;
 
-public class StairsObject extends TerrainObject {
+/**
+ *
+ * @author Eben
+ */
+public class TerrainObject extends BaseObject {
 
-    boolean down = true; //if it's an up stair, this will be false
-
-    public StairsObject() {
-        super("stairs", '>', true);
+    public static final TerrainObject DEFAULT = new TerrainObject();
+    
+    public TerrainObject() {
+        super("terrain", '~', true);
     }
-
-    public StairsObject(boolean goingDown) {
-        if (goingDown) {
-            myName = "stairs leading downward";
-            represent = '>';
-            passable = true;
-        } else {
-            myName = "stairs leading upward";
-            represent = '<';
-            passable = true;
-            down = false;
-        }
+    
+    public TerrainObject(String name, char represent, boolean passable){
+        super(name, represent, passable);
+    }
+    
+    public TerrainObject(String name, char represent, boolean passable, CSIColor color){
+        super(name, represent, passable, color);
     }
 
     @Override
     public String objectOutput() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
-        ret = "StairsObject" + eol + myName + eol + 
-            String.valueOf(represent) + eol + 
-            String.valueOf(passable) + eol + 
-            myColor.getColor() + eol + 
-            String.valueOf(visible) + eol + 
-            String.valueOf(down) + eol + eol;
+        ret = "TerrainObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + myColor.getColor() + eol + String.valueOf(visible) + eol + eol;
         return ret;
     }
 
@@ -45,7 +43,6 @@ public class StairsObject extends TerrainObject {
             passable = reader.readLine().equalsIgnoreCase("true");
             myColor = new CSIColor(Integer.valueOf(reader.readLine()));
             visible = reader.readLine().equalsIgnoreCase("true");
-            down = reader.readLine().equalsIgnoreCase("true");
         } catch (IOException ioe) {
             System.out.println("Fatal error reading from file!");
             ioe.printStackTrace();
