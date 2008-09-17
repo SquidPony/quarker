@@ -11,7 +11,7 @@ import net.slashie.util.FileUtil;
 
 public class Workhorse {
     //-------------------Custom variables-------------------//
-    private String versionNumber = "0.04";
+    private String versionNumber = "0.05";
     private WSwingConsoleInterface mainInterface;
     private TextInformBox infoBox;
     private int infoSpace = 2; //this is the height of the infoBox
@@ -22,7 +22,7 @@ public class Workhorse {
     private int mapLevel = 1; //depth of the dungeon, starts at 1
     private int recurseNumber = 0; //this will allow us to limit the number of recurses on recursive methods
     private int maxRecurse = 150; //this is the most recurses allowed (likely to be changed right before calling a recursive function
-    private GameObject[][] mapContents = new GameObject[mapSizeX][mapSizeY];
+    private MapObject[][] mapContents = new MapObject[mapSizeX][mapSizeY];
     private Point currentLoc = new Point((mapSizeX / 2), (mapSizeY / 2));
     private XpLevels quarkLevels = new XpLevels();
     private PlayerObject player = new PlayerObject();
@@ -75,7 +75,7 @@ public class Workhorse {
         do {
             actionKey = mainInterface.inkey();
             infoBox.clear();
-            TakeAction(actionKey);
+            takeAction(actionKey);
         } while (true);
     }
 
@@ -85,8 +85,13 @@ public class Workhorse {
         displayMap(); // this should most likey be the last thing that happens before the player gets to go again
         mainInterface.refresh();
     }
+    
+    private void restTurn(){
+        runTurn();
+        //eventualy there should be healing here as well
+    }
 
-    private void TakeAction(CharKey thisKey) {  // this will feed control to the appropriate method based on player input
+    private void takeAction(CharKey thisKey) {  // this will feed control to the appropriate method based on player input
         if (thisKey.isArrow()) {
             if (thisKey.isUpArrow()) {
                 tryToMove(currentLoc.x, currentLoc.y - 1);
@@ -104,6 +109,8 @@ public class Workhorse {
                 tryToMove(currentLoc.x - 1, currentLoc.y);
             } else if (thisKey.isUpLeftArrow()) {
                 tryToMove(currentLoc.x - 1, currentLoc.y - 1);
+            } else if (thisKey.isSelfArrow()){
+                restTurn();
             }
         } else {
             switch (thisKey.code) {
@@ -127,13 +134,11 @@ public class Workhorse {
     }
 
     private void runMonsterTurn() {
-
-
         int x, y;
         for (int i = 0; i < mapSizeX; i++) {
             for (int k = 0; k < mapSizeY; k++) {
-                if ((mapContents[i][k] instanceof MonsterObject)) {
-                    MonsterObject monObj = (MonsterObject) mapContents[i][k];
+                if ((mapContents[i][k].hasMonster())) {
+                    MonsterObject monObj = mapContents[i][k].getMonster();
                     if (monObj.getWakeful()) {
                         x = 0;
                         y = 0;
@@ -152,11 +157,12 @@ public class Workhorse {
                         if ((x == 0) && (y == 0)) {
                             monsterAttacks(i, k);
                         } else {
-                            if (mapContents[i + x][k + y] instanceof FloorObject) {
-                                mapContents[i][k] = new FloorObject();
-                                mapContents[i + x][k + y] = monObj;
+                            MapObject tempObj = mapContents[i + x][k + y];
+                            if (tempObj.getTopObject() instanceof TerrainObject) {
+                                mapContents[i][k].setMonster(null);
+                                tempObj.setMonster(monObj);
                             } else {
-                                tellPlayer("The " + monObj.myName + " glares at the " + mapContents[i + x][k + y].myName + " that's in its way.");
+                                tellPlayer("The " + monObj.myName + " glares at the " + tempObj.getTopObjectName() + " that's in its way.");
                             }
                         }
                     }
@@ -166,7 +172,7 @@ public class Workhorse {
     }
 
     private void monsterAttacks(int a, int b) {
-        MonsterObject monster = (MonsterObject) mapContents[a][b];
+        MonsterObject monster = mapContents[a][b].getMonster();
         int attack;
         attack = monster.getAttack();
         if ((attack + rng.nextInt(10)) > (player.level * 3 + rng.nextInt(30))) {
@@ -204,8 +210,8 @@ public class Workhorse {
     }
 
     private void tryToGoDownStairs() {
-        if (mapContents[currentLoc.x][currentLoc.y] instanceof StairsObject) {
-            StairsObject nowObj = (StairsObject) mapContents[currentLoc.x][currentLoc.y];
+        if (mapContents[currentLoc.x][currentLoc.y].isStairs()) {
+            StairsObject nowObj = (StairsObject) mapContents[currentLoc.x][currentLoc.y].getFlooring();
             if (nowObj.down) {
                 buildNewLevel(true);
             } else {
@@ -217,8 +223,8 @@ public class Workhorse {
     }
 
     private void tryToGoUpStairs() {
-        if (mapContents[currentLoc.x][currentLoc.y] instanceof StairsObject) {
-            StairsObject nowObj = (StairsObject) mapContents[currentLoc.x][currentLoc.y];
+        if (mapContents[currentLoc.x][currentLoc.y].isStairs()) {
+            StairsObject nowObj = (StairsObject) mapContents[currentLoc.x][currentLoc.y].getFlooring();
             if (!(nowObj.down)) {
                 buildNewLevel(false);
             } else {
@@ -230,21 +236,18 @@ public class Workhorse {
     }
 
     private void tryToMove(int a, int b) {
-        GameObject nowObj = mapContents[a][b];
+        MapObject newObj = mapContents[a][b];
 
-        if (nowObj.passable) {
+        if (newObj.isPassable()) {
             currentLoc.move(a, b);
-        } else if (nowObj instanceof WallObject) {
-        }
-
-        if (mapContents[a][b] instanceof MonsterObject) {
-            if (doFight((MonsterObject) mapContents[a][b])) {
-                mapContents[a][b] = new FloorObject();
+        } else {
+            if (newObj.hasMonster()) {
+                if (doFight(newObj.getMonster())) {
+                    newObj.setMonster(null);
+                }
+            } else {
+                tellPlayer("You can't move through the " + newObj.getTopObjectName() + "!");
             }
-        } else if (!(mapContents[a][b].passable)) {
-            tellPlayer("You can't move through the " + mapContents[a][b].myName + "!");
-        } else if (mapContents[a][b].passable) {
-            currentLoc.move(a, b);
         }
         runTurn();
     }
@@ -285,17 +288,17 @@ public class Workhorse {
     private void displayMap() {
 
         String beol = " XXX ";//end of line for TextBox
-        GameObject nowContents;
+        BaseObject nowContents;
         for (int k = 0; k < mapSizeX; k++) {
             for (int i = 0; i < mapSizeY; i++) {
-                nowContents = mapContents[k][i];
+                nowContents = mapContents[k][i].getTopObject();
                 mainInterface.print(k, i + 2, nowContents.represent, nowContents.myColor);
             }
         }
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.myColor);
         infoBox.draw();
         statsBox.setText(
-            beol + "Mass: " + beol +  player.hp + beol + beol + "Size: " + beol + player.level + beol  + beol + "Xp: " + beol + player.size + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+            beol + "Mass: " + beol + player.hp + beol + beol + "Size: " + beol + player.level + beol + beol + "Xp: " + beol + player.size + beol + beol + "Spacetime: " + beol + mapLevel + beol);
         statsBox.draw();
         mainInterface.refresh();
     }
@@ -343,7 +346,7 @@ public class Workhorse {
         int k = start.y;
         if (!((i > (mapSizeX - 1)) || (k > (mapSizeY - 1)) || (i < 0) || (k < 0))) { //make sure we're not over the edge of the map
             tempColor = checkColorList(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
-            mapContents[i][k] = new FoldObject(tempColor);
+            mapContents[i][k].setFlooring(new FoldObject(tempColor));
         }
         recurseNumber++;
         i = i + 1 - rng.nextInt(3);
@@ -353,10 +356,12 @@ public class Workhorse {
 
     private void creaturePlacement() {// this will place creatures randomly
         int r; //this will hold our random numbers
+        MapObject tempObj;
         //let's fill in the rest randomly for now
         for (int i = 0; i < (mapSizeX); i++) {
             for (int k = 0; k < (mapSizeY); k++) {
-                if (!(mapContents[i][k] instanceof WallObject)) {
+                tempObj = mapContents[i][k];
+                if (!(tempObj.isWall())) {
                     r = rng.nextInt(25); //about 1/25th of the tiles will have an enemy
                     if (r == 0) {
                         if (mapLevel < 3) {
@@ -367,17 +372,17 @@ public class Workhorse {
                             r = rng.nextInt(75);
                         }
                         if (r < 15) {
-                            mapContents[i][k] = new MonsterObject(MonsterTypeEnum.TRUTH);
+                            tempObj.setMonster(new MonsterObject(MonsterTypeEnum.TRUTH));
                         } else if (r < 40) {
-                            mapContents[i][k] = new MonsterObject(MonsterTypeEnum.BEAUTY);
+                            tempObj.setMonster(new MonsterObject(MonsterTypeEnum.BEAUTY));
                         } else if (r < 100) {
-                            mapContents[i][k] = new MonsterObject(MonsterTypeEnum.CHARM);
+                            tempObj.setMonster(new MonsterObject(MonsterTypeEnum.CHARM));
                         } else if (r < 300) {
-                            mapContents[i][k] = new MonsterObject(MonsterTypeEnum.STRANGE);
+                            tempObj.setMonster(new MonsterObject(MonsterTypeEnum.STRANGE));
                         } else if (r < 600) {
-                            mapContents[i][k] = new MonsterObject(MonsterTypeEnum.UP);
+                            tempObj.setMonster(new MonsterObject(MonsterTypeEnum.UP));
                         } else {
-                            mapContents[i][k] = new MonsterObject(MonsterTypeEnum.DOWN);
+                            tempObj.setMonster(new MonsterObject(MonsterTypeEnum.DOWN));
                         }
                     } //else {mapContents[i][k] = new FloorObject();}
                 }
@@ -389,8 +394,8 @@ public class Workhorse {
 
         for (int i = 0; i < (mapSizeX); i++) {
             for (int k = 0; k < (mapSizeY); k++) {
-                if (!(mapContents[i][k] instanceof WallObject)) {
-                    mapContents[i][k] = new FloorObject();
+                if (!(mapContents[i][k].isWall())) {
+                    mapContents[i][k].setFlooring();
                 }
             }
         }
@@ -400,11 +405,11 @@ public class Workhorse {
         if ((x < 0) || (x > (mapSizeX - 1)) || (y < 0) || (y > (mapSizeY - 1))) {
             return; //exits if coords are out of range for the map
         }
-        if (mapContents[x][y].visible) {
+        if (mapContents[x][y].isVisible()) {
             return;
         }
-        if (!(mapContents[x][y] instanceof WallObject)) {
-            mapContents[x][y].visible = true;
+        if (!(mapContents[x][y].isWall())) {
+            mapContents[x][y].getTopObject().visible = true;
             for (int i = -1; i < 2; i++) {
                 for (int k = -1; k < 2; k++) {
                     floodFill(x + i, y + k);
@@ -427,10 +432,10 @@ public class Workhorse {
             if (y < currentLoc.y) {
                 y++;
             }
-            if (mapContents[x][y] instanceof WallObject) {
-                mapContents[x][y] = new FloorObject();
+            if (mapContents[x][y].isWall()) {
+                mapContents[x][y].setFlooring();
             }
-        } while (!(mapContents[x][y].visible));
+        } while (!(mapContents[x][y].isVisible()));
 
     }
 
@@ -440,7 +445,7 @@ public class Workhorse {
 
         for (int i = 0; i < (mapSizeX); i++) {
             for (int k = 0; k < (mapSizeY); k++) {
-                if (!(mapContents[i][k] instanceof WallObject) && !(mapContents[i][k].visible)) {
+                if (!(mapContents[i][k].isWall()) && !(mapContents[i][k].isVisible())) {
                     crushWalls(i, k);
                     floodFill(i, k);
                 }
@@ -454,7 +459,7 @@ public class Workhorse {
         if (goingDown) {
             mapLevel++;
             buildMap();
-            mapContents[currentLoc.x][currentLoc.y] = new StairsObject(false);
+            mapContents[currentLoc.x][currentLoc.y].setFlooring(new StairsObject(false));
             tellPlayer("You have travelled through a wormhole and found a new area of spacetime to conquer.");
         } else {
             mapLevel--;
@@ -485,7 +490,7 @@ public class Workhorse {
         //initiates the mapContents
         for (int i = 0; i < (mapSizeX); i++) {
             for (int k = 0; k < mapSizeY; k++) {
-                mapContents[i][k] = new DebugObject();
+                mapContents[i][k] = new MapObject();
             }
         }
 
@@ -499,30 +504,30 @@ public class Workhorse {
 
         //Here is the initialization of the map with walls along the sides
         for (int i = 0; i < mapSizeX; i++) {
-            mapContents[i][0] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
-            mapContents[i][mapSizeY - 1] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[i][0].setFlooring(new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30))));
+            mapContents[i][mapSizeY - 1].setFlooring(new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30))));
         }
         for (int i = 0; i < mapSizeY; i++) {
-            mapContents[0][i] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
-            mapContents[mapSizeX - 1][i] = new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
+            mapContents[0][i].setFlooring(new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30))));
+            mapContents[mapSizeX - 1][i].setFlooring(new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30))));
         }
 
         floorPlacement();
-        mapContents[currentLoc.x][currentLoc.y] = new FloorObject();
+        mapContents[currentLoc.x][currentLoc.y].setFlooring(TerrainObject.DEFAULT);
         checkMapForConnectivity();
         creaturePlacement();
 
         //let's make sure the player is on an open space and not on a creature!
-        mapContents[currentLoc.x][currentLoc.y] = new FloorObject();
-        mapContents[currentLoc.x][currentLoc.y].visible = true;
+        mapContents[currentLoc.x][currentLoc.y].setMonster(null);
+        mapContents[currentLoc.x][currentLoc.y].getTopObject().visible = true;
 
         //let's make some stairs!
         boolean stairsPlaced = false;
         do {
             x = rng.nextInt(mapSizeX);//these lines give us a random point in the  map
             y = rng.nextInt(mapSizeY);
-            if (mapContents[x][y] instanceof FloorObject) {
-                mapContents[x][y] = new StairsObject();
+            if (mapContents[x][y].isFloor()) {
+                mapContents[x][y].setFlooring(new StairsObject());
                 stairsPlaced = true;
             }
         } while (!stairsPlaced);
@@ -549,7 +554,7 @@ public class Workhorse {
         try {
             for (int i = 0; i < mapSizeX; i++) {
                 for (int k = 0; k < mapSizeY; k++) {
-                    writer.write(mapContents[i][k].objectOutput());
+                    mapContents[i][k].objectOutput(writer);
                 }
             }
             writer.write(player.objectOutput());
@@ -576,6 +581,7 @@ public class Workhorse {
         fileName = player.myName + ".txt";
         BufferedReader reader = null;
         String currentType;
+        MapObject oldObj = new MapObject();
 
         try {
             reader = FileUtil.getReader(fileName);
@@ -584,37 +590,20 @@ public class Workhorse {
             askPlayer(2, "File does not exist. Press Enter to continue.");
             displayMap();
         }
-        if (!(reader == null)) {
+        if (reader != null) {
             try {
+                currentType = reader.readLine();
                 for (int i = 0; i < mapSizeX; i++) {
                     for (int k = 0; k < mapSizeY; k++) {
-//                        tellPlayer("currently: " + i + " " + k + " "); // for debugging
-                        currentType = reader.readLine();
-                        if (currentType.equals("GameObject")) {
-                            mapContents[i][k] = new GameObject();
-                        } else if (currentType.equals("FoldObject")) {
-                            mapContents[i][k] = new FoldObject();
-                        } else if (currentType.equals("DebugObject")) {
-                            mapContents[i][k] = new DebugObject();
-                        } else if (currentType.equals("FloorObject")) {
-                            mapContents[i][k] = new FloorObject();
-                        } else if (currentType.equals("MonsterObject")) {
-                            mapContents[i][k] = new MonsterObject();
-                        } else if (currentType.equals("NullObject")) {
-                            mapContents[i][k] = new NullObject();
-                        } else if (currentType.equals("StairsObject")) {
-                            mapContents[i][k] = new StairsObject();
-                        } else if (currentType.equals("WallObject")) {
-                            mapContents[i][k] = new WallObject();
-                        }
-
-
-                        mapContents[i][k].pushObject(reader);
-                        reader.readLine(); //gets rid of readability space between entries
+//                        tellPlayer("currently: " + i + " " + k + ", last: " + oldObj.getTopObjectName() + " "); // for debugging
+                        mapContents[i][k].pushObject(reader, currentType);
+//                        oldObj = mapContents[i][k]; // for debugging
+//                        displayMap(); // for debugging
+//                        mainInterface.refresh(); // for debugging
 
                     }
                 }
-                reader.readLine(); //gets rid of entry title
+                
                 player.pushObject(reader);
                 reader.readLine(); //gets rid of empty space between objects
                 reader.readLine(); //gets rid of entry title
