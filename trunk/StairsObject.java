@@ -15,11 +15,11 @@ public class StairsObject extends TerrainObject {
         passable = true;
         visible = true;
         if (goingDown) {
-            myName = "stairs leading downward";
+            myName = "spacetime advancing wormhole";
             represent = '>';
             down = true;
         } else {
-            myName = "stairs leading upward";
+            myName = "spacetime retracting wormhole";
             represent = '<';
             down = false;
         }
