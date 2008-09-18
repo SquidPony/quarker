@@ -85,10 +85,10 @@ public class Workhorse {
         displayMap(); // this should most likey be the last thing that happens before the player gets to go again
         mainInterface.refresh();
     }
-    
-    private void restTurn(){
+
+    private void restTurn() {
         runTurn();
-        //eventualy there should be healing here as well
+    //eventualy there should be healing here as well
     }
 
     private void takeAction(CharKey thisKey) {  // this will feed control to the appropriate method based on player input
@@ -109,7 +109,7 @@ public class Workhorse {
                 tryToMove(currentLoc.x - 1, currentLoc.y);
             } else if (thisKey.isUpLeftArrow()) {
                 tryToMove(currentLoc.x - 1, currentLoc.y - 1);
-            } else if (thisKey.isSelfArrow()){
+            } else if (thisKey.isSelfArrow()) {
                 restTurn();
             }
         } else {
@@ -129,6 +129,8 @@ public class Workhorse {
                 case CharKey.R:
                     loadGame();
                     break;
+                case CharKey.L:
+                    lookAround();
             }
         }
     }
@@ -207,6 +209,64 @@ public class Workhorse {
         if (player.size >= player.nextSize) {
             levelUp();
         }
+    }
+
+    private void lookAround() {
+        CharKey actionKey = new CharKey();
+        BaseObject cursor = new BaseObject("cursor", '?', true);
+        Point cursorLoc = new Point(currentLoc.x, currentLoc.y);
+
+        do {
+            actionKey = mainInterface.inkey();
+            infoBox.clear();
+            cursorLoc = doLooking(actionKey, cursorLoc);
+            displayMap();
+            mainInterface.print(cursorLoc.x, cursorLoc.y + infoSpace, cursor.represent, CSIColor.AMBER);
+        } while (true);
+    }
+
+    private Point doLooking(CharKey thisKey, Point current) {
+        Point tempLoc = current;
+        if (thisKey.isArrow()) {
+            if (thisKey.isUpArrow()) {
+                tempLoc = new Point(current.x, current.y - 1);
+            } else if (thisKey.isUpRightArrow()) {
+                tempLoc = new Point(current.x + 1, current.y - 1);
+            } else if (thisKey.isRightArrow()) {
+                tempLoc = new Point(current.x + 1, current.y);
+            } else if (thisKey.isDownRightArrow()) {
+                tempLoc = new Point(current.x + 1, current.y + 1);
+            } else if (thisKey.isDownArrow()) {
+                tempLoc = new Point(current.x, current.y + 1);
+            } else if (thisKey.isDownLeftArrow()) {
+                tempLoc = new Point(current.x - 1, current.y + 1);
+            } else if (thisKey.isLeftArrow()) {
+                tempLoc = new Point(current.x - 1, current.y);
+            } else if (thisKey.isUpLeftArrow()) {
+                tempLoc = new Point(current.x - 1, current.y - 1);
+            }
+        } else {
+            switch (thisKey.code) {
+                case CharKey.ESC:
+                    leaving();
+                    break;
+                case CharKey.MORETHAN:
+                    tryToGoDownStairs();
+                    break;
+                case CharKey.LESSTHAN:
+                    tryToGoUpStairs();
+                    break;
+                case CharKey.S:
+                    saveGame();
+                    break;
+                case CharKey.R:
+                    loadGame();
+                    break;
+                case CharKey.ENTER:
+                    tellPlayer(mapContents[tempLoc.x][tempLoc.y].getTopObjectName());
+            }
+        }
+        return tempLoc;
     }
 
     private void tryToGoDownStairs() {
@@ -361,7 +421,7 @@ public class Workhorse {
         for (int i = 0; i < (mapSizeX); i++) {
             for (int k = 0; k < (mapSizeY); k++) {
                 tempObj = mapContents[i][k];
-                if (!(tempObj.isWall())) {
+                if (tempObj.isFloor()) {
                     r = rng.nextInt(25); //about 1/25th of the tiles will have an enemy
                     if (r == 0) {
                         if (mapLevel < 3) {
@@ -409,7 +469,7 @@ public class Workhorse {
             return;
         }
         if (!(mapContents[x][y].isWall())) {
-            mapContents[x][y].getTopObject().visible = true;
+            mapContents[x][y].setVisible();
             for (int i = -1; i < 2; i++) {
                 for (int k = -1; k < 2; k++) {
                     floodFill(x + i, y + k);
@@ -513,13 +573,12 @@ public class Workhorse {
         }
 
         floorPlacement();
-        mapContents[currentLoc.x][currentLoc.y].setFlooring(TerrainObject.DEFAULT);
+        mapContents[currentLoc.x][currentLoc.y].setFlooring();
         checkMapForConnectivity();
         creaturePlacement();
 
         //let's make sure the player is on an open space and not on a creature!
         mapContents[currentLoc.x][currentLoc.y].setMonster(null);
-        mapContents[currentLoc.x][currentLoc.y].getTopObject().visible = true;
 
         //let's make some stairs!
         boolean stairsPlaced = false;
@@ -603,7 +662,7 @@ public class Workhorse {
 
                     }
                 }
-                
+
                 player.pushObject(reader);
                 reader.readLine(); //gets rid of empty space between objects
                 reader.readLine(); //gets rid of entry title
@@ -625,7 +684,7 @@ public class Workhorse {
                 mainInterface.refresh();
                 tellPlayer("Spacetime Continuum Restored.");
             } catch (IOException ioe) {
-                System.out.println("Fatal Error reading from " + fileName);
+                System.out.println("Fatal Error reading from " + fileName + " " + ioe.getMessage());
                 ioe.printStackTrace();
                 return;
             }

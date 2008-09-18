@@ -129,6 +129,17 @@ public class MapObject {
         }
         return true;
     }
+    
+    public void setVisible(){
+        setVisible(true);
+    }
+    
+    public void setVisible(boolean vis){
+        flooring.visible = vis;
+        if (hasMonster()){
+            monster.visible = vis;
+        }
+    }
 
     public void objectOutput(BufferedWriter writer) throws IOException {
         writer.write(flooring.objectOutput());
@@ -153,25 +164,26 @@ public class MapObject {
         resetMe();
         String currentType = type;
 
-        if (currentType.equals("GameObject")) {
-        } else if (currentType.equals("FoldObject")) {
+        if (currentType.equalsIgnoreCase("FoldObject")) {
             flooring = new FoldObject();
-        } else if (currentType.equals("DebugObject")) {
+        } else if (currentType.equalsIgnoreCase("DebugObject")) {
             flooring = new DebugObject();
-        } else if (currentType.equals("FloorObject")) {
+        } else if (currentType.equalsIgnoreCase("FloorObject")) {
             flooring = new FloorObject();
-        } else if (currentType.equals("NullObject")) {
+        } else if (currentType.equalsIgnoreCase("NullObject")) {
             flooring = new NullObject();
-        } else if (currentType.equals("StairsObject")) {
+        } else if (currentType.equalsIgnoreCase("StairsObject")) {
             flooring = new StairsObject();
-        } else if (currentType.equals("WallObject")) {
+        } else if (currentType.equalsIgnoreCase("WallObject")) {
             flooring = new WallObject();
+        } else {
+            throw new IOException("Object not known.");
         }
 
         flooring.pushObject(reader);
         reader.readLine(); //gets rid of readability space between entries
-
         currentType = reader.readLine();
+        
         if (currentType.equals("MonsterObject")) {
             monster = new MonsterObject();
             monster.pushObject(reader);
@@ -190,7 +202,7 @@ public class MapObject {
                 currentType = reader.readLine();
             } while (currentType.equals("ItemObject"));
         }
-        
+
         return currentType;
 
     }
