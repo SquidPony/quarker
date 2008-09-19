@@ -27,7 +27,7 @@ public class PlayerObject extends BaseObject {
     public String objectOutput() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
-        ret = "GameObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + myColor.getColor() + eol + String.valueOf(visible) + eol + hp + eol + maxHp + eol + size + eol + level + eol + nextSize + eol + eol;
+        ret = "GameObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + hp + eol + maxHp + eol + size + eol + level + eol + nextSize + eol + eol;
         return ret;
     }
 
@@ -37,7 +37,7 @@ public class PlayerObject extends BaseObject {
             myName = reader.readLine();
             represent = reader.readLine().charAt(0);
             passable = reader.readLine().equalsIgnoreCase("true");
-            myColor = new CSIColor(Integer.valueOf(reader.readLine()));
+            frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
             visible = reader.readLine().equalsIgnoreCase("true");
             hp = Integer.valueOf(reader.readLine());
             maxHp = Integer.valueOf(reader.readLine());

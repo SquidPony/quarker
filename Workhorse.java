@@ -131,12 +131,16 @@ public class Workhorse {
                     break;
                 case CharKey.L:
                     lookAround();
+                    break;
+                case CharKey.B:
+                    buildNewLevel(true);
+                    break;
             }
         }
     }
 
     private void runMonsterTurn() {
-        int x, y;
+        int x,  y;
         for (int i = 0; i < mapSizeX; i++) {
             for (int k = 0; k < mapSizeY; k++) {
                 if ((mapContents[i][k].hasMonster())) {
@@ -315,7 +319,7 @@ public class Workhorse {
     public boolean doFight(MonsterObject monster) {
 
 
-        int r, i;
+        int r,  i;
 
         r = rng.nextInt(100);
         r = r + player.level * 5 - monster.getDefense();
@@ -352,10 +356,10 @@ public class Workhorse {
         for (int k = 0; k < mapSizeX; k++) {
             for (int i = 0; i < mapSizeY; i++) {
                 nowContents = mapContents[k][i].getTopObject();
-                mainInterface.print(k, i + 2, nowContents.represent, nowContents.myColor);
+                mainInterface.print(k, i + 2, nowContents.represent, nowContents.frontColor);
             }
         }
-        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.myColor);
+        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
         infoBox.draw();
         statsBox.setText(
             beol + "Mass: " + beol + player.hp + beol + beol + "Size: " + beol + player.level + beol + beol + "Xp: " + beol + player.size + beol + beol + "Spacetime: " + beol + mapLevel + beol);
@@ -450,12 +454,16 @@ public class Workhorse {
         }
     }
 
-    private void floorPlacement() {
+    private void floorPlacement(boolean different) {
 
         for (int i = 0; i < (mapSizeX); i++) {
             for (int k = 0; k < (mapSizeY); k++) {
                 if (!(mapContents[i][k].isWall())) {
-                    mapContents[i][k].setFlooring();
+                    if (different) {
+                        mapContents[i][k].setFlooring(new FloorObject());
+                    } else {
+                        mapContents[i][k].setFlooring();
+                    }
                 }
             }
         }
@@ -493,7 +501,7 @@ public class Workhorse {
                 y++;
             }
             if (mapContents[x][y].isWall()) {
-                mapContents[x][y].setFlooring();
+                mapContents[x][y].setFlooring(new FloorObject());
             }
         } while (!(mapContents[x][y].isVisible()));
 
@@ -545,7 +553,7 @@ public class Workhorse {
 
     private void buildMap() {//this will build all of the elements of the map
 
-        int blockX, blockY, x, y; //these will be our random numbers when we need them
+        int blockX,  blockY,  x,  y; //these will be our random numbers when we need them
 
         //initiates the mapContents
         for (int i = 0; i < (mapSizeX); i++) {
@@ -572,9 +580,10 @@ public class Workhorse {
             mapContents[mapSizeX - 1][i].setFlooring(new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30))));
         }
 
-        floorPlacement();
-        mapContents[currentLoc.x][currentLoc.y].setFlooring();
+        floorPlacement(true);
+        mapContents[currentLoc.x][currentLoc.y].setFlooring(new FloorObject());
         checkMapForConnectivity();
+//        floorPlacement(false);
         creaturePlacement();
 
         //let's make sure the player is on an open space and not on a creature!

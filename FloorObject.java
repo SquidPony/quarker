@@ -31,7 +31,7 @@ public class FloorObject extends TerrainObject{
     public String objectOutput() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
-        ret = "FloorObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + myColor.getColor() + eol + String.valueOf(visible) + eol + eol;
+        ret = "FloorObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;
         return ret;
     }
 }

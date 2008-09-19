@@ -33,7 +33,7 @@ public class StairsObject extends TerrainObject {
             myName + eol + 
             String.valueOf(represent) + eol + 
             String.valueOf(passable) + eol + 
-            myColor.getColor() + eol + 
+            frontColor.getColor() + eol + 
             String.valueOf(visible) + eol + 
             String.valueOf(down) + eol;//for some unknown reason, the last line being read doesn't get stripped so this is a kludge (removing the usual trailing + eol) to fix that bug.  I must figure out why it's happening and stop it though!
         return ret;
@@ -45,7 +45,7 @@ public class StairsObject extends TerrainObject {
             myName = reader.readLine();
             represent = reader.readLine().charAt(0);
             passable = reader.readLine().equalsIgnoreCase("true");
-            myColor = new CSIColor(Integer.valueOf(reader.readLine()));
+            frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
             visible = reader.readLine().equalsIgnoreCase("true");
             down = reader.readLine().equalsIgnoreCase("true");
         } catch (IOException ioe) {
