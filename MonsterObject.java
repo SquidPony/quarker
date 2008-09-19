@@ -40,16 +40,15 @@ public class MonsterObject extends BaseObject {
     
     
     public MonsterObject(MonsterObject mon) {
-        this.myType = myType;
-        this.myName = myType.myName;
-        this.represent = myType.represent;
-        this.passable = myType.passable;
-        this.myColor = myType.myColor;
-        this.hp = myType.hp;
-        this.damage = myType.damage;
-        this.attack = myType.attack;
-        this.defense = myType.defense;
-        this.satiation = myType.satiation;
+        myName = mon.myName;
+        represent = mon.represent;
+        passable = mon.passable;
+        myColor = mon.myColor;
+        hp = mon.hp;
+        damage = mon.damage;
+        attack = mon.attack;
+        defense = mon.defense;
+        satiation = mon.satiation;
     }
     
     //this constructor lets us set everything, probably useful for unique monsters
