@@ -14,15 +14,14 @@ import net.slashie.libjcsi.CSIColor;
  */
 public class MonsterObject extends BaseObject {
 
-    private int hp, //current health of the monster
+    protected int hp, //current health of the monster
          damage, //amount of base damage the monster will do
          attack, //base chance of hit on attack
          defense, //base defense against attack
          satiation, //how full player will get from absorbing the monster
          x,  y; //current x,y coordinates for the monster
-    private int chromatic;
-    private Vector<FeelingsObject> feelings = null;
-    private boolean awake = false; //will tell us if the monster is active, default is not active
+    protected Vector<FeelingsObject> feelings = null;
+    protected boolean awake = false; //will tell us if the monster is active, default is not active
     /* The following constants are to make default monsters
      * of the listed types
      */
@@ -36,6 +35,7 @@ public class MonsterObject extends BaseObject {
         represent = mon.represent;
         passable = mon.passable;
         frontColor = mon.frontColor;
+        backColor = mon.backColor;
         hp = mon.hp;
         damage = mon.damage;
         attack = mon.attack;
@@ -43,11 +43,10 @@ public class MonsterObject extends BaseObject {
         satiation = mon.satiation;
     }
 
-    public MonsterObject(String myName, char represent, boolean passable, CSIColor myColor, int hp, int damage, int attack, int defense, int satiation) {
-        this(myName, represent, passable, myColor, BaseObject.DEFAULT_BACK_COLOR, hp, damage, attack, defense, satiation, GREEN);
-    }
-
-    public MonsterObject(String myName, char represent, boolean passable, CSIColor frontColor, CSIColor backColor, int hp, int damage, int attack, int defense, int satiation, int chrome) {
+    public MonsterObject(String myName, char represent, boolean passable, 
+        CSIColor frontColor, CSIColor backColor, int hp, int damage, int attack, 
+        int defense, int satiation){
+        
         this.myName = myName;
         this.represent = represent;
         this.passable = passable;
@@ -56,33 +55,6 @@ public class MonsterObject extends BaseObject {
         this.attack = attack;
         this.defense = defense;
         this.satiation = satiation;
-        this.chromatic = chrome;
-        switch (chrome){
-            case 0:
-                this.frontColor = CSIColor.RED_PIGMENT;
-                this.backColor = BaseObject.DEFAULT_BACK_COLOR;
-                break;
-            case 1:
-                this.frontColor = CSIColor.GREEN;
-                this.backColor = BaseObject.DEFAULT_BACK_COLOR;
-                break;
-            case 2:
-                this.frontColor = CSIColor.BLUE;
-                this.backColor = BaseObject.DEFAULT_BACK_COLOR;
-                break;
-            case 3:
-                this.frontColor = BaseObject.DEFAULT_FRONT_COLOR;
-                this.backColor = CSIColor.RED_PIGMENT;
-                break;
-            case 4:
-                this.frontColor = BaseObject.DEFAULT_FRONT_COLOR;
-                this.backColor = CSIColor.GREEN;
-                break;
-            case 5:
-                this.frontColor = BaseObject.DEFAULT_FRONT_COLOR;
-                this.backColor = CSIColor.BLUE;
-                break;
-        }
         this.frontColor = frontColor;
         this.backColor = backColor;
         this.feelings = new Vector<FeelingsObject>();

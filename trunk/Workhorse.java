@@ -436,17 +436,17 @@ public class Workhorse {
                             r = rng.nextInt(75);
                         }
                         if (r < 15) {
-                            tempObj.setMonster(new MonsterObject(MonsterObject.TRUTH));
+                            tempObj.setMonster(new QuarkObject(QuarkObject.TRUTH));
                         } else if (r < 40) {
-                            tempObj.setMonster(new MonsterObject(MonsterObject.BEAUTY));
+                            tempObj.setMonster(new QuarkObject(QuarkObject.BEAUTY));
                         } else if (r < 100) {
-                            tempObj.setMonster(new MonsterObject(MonsterObject.CHARM));
+                            tempObj.setMonster(new QuarkObject(QuarkObject.CHARM));
                         } else if (r < 300) {
-                            tempObj.setMonster(new MonsterObject(MonsterObject.STRANGE));
+                            tempObj.setMonster(new QuarkObject(QuarkObject.STRANGE));
                         } else if (r < 600) {
-                            tempObj.setMonster(new MonsterObject(MonsterObject.UP));
+                            tempObj.setMonster(new QuarkObject(QuarkObject.UP));
                         } else {
-                            tempObj.setMonster(new MonsterObject(MonsterObject.DOWN));
+                            tempObj.setMonster(new QuarkObject(QuarkObject.DOWN));
                         }
                     } //else {mapContents[i][k] = new FloorObject();}
                 }
