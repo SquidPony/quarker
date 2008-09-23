@@ -14,6 +14,7 @@ import net.slashie.libjcsi.CSIColor;
 public class TerrainObject extends BaseObject {
 
     public static final TerrainObject DEFAULT = new TerrainObject();
+    boolean everSeen = false;
     
     public TerrainObject() {
         super("terrain", '~', true);
@@ -28,7 +29,7 @@ public class TerrainObject extends BaseObject {
     }
 
     @Override
-    public String objectOutput() {// this should be overridden to ensure everything is saved correctly
+    public String outputObject() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = "TerrainObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;
@@ -48,5 +49,17 @@ public class TerrainObject extends BaseObject {
             ioe.printStackTrace();
             return;
         }
+    }
+
+    public boolean isEverSeen() {
+        return everSeen;
+    }
+
+    public void setEverSeen(){
+        setEverSeen(true);
+    }
+    
+    public void setEverSeen(boolean everSeen) {
+        this.everSeen = everSeen;
     }
 }

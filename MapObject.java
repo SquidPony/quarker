@@ -11,42 +11,62 @@ import java.util.ArrayList;
  */
 public class MapObject {
 
-    private BaseObject flooring; //should be either a wall or floor or stairs
+    private TerrainObject flooring; //should be either a wall or floor or stairs
     private MonsterObject monster;
     private ArrayList<ItemObject> items;
+    private Boolean changed = true;
 
     public MapObject() {
-        this(DebugObject.DEFAULT, null);
-    }
-
-    public MapObject(WallObject wall) {
-        this(wall, null);
     }
 
     public MapObject(TerrainObject floor) {
         this(floor, null);
     }
 
-    public MapObject(BaseObject base, MonsterObject monster) {
+    public MapObject(TerrainObject base, MonsterObject monster) {
         flooring = base;
         this.monster = monster;
         items = null;
     }
 
-    public MapObject(BaseObject base, MonsterObject monster, ItemObject... itemList) {
+    public MapObject(TerrainObject base, MonsterObject monster, ItemObject... itemList) {
         this(base, monster);
         items = new ArrayList<ItemObject>(itemList.length);
         for (int i = 0; i < itemList.length; i++) {
             items.add(itemList[i]);
         }
     }
+    
+    public boolean hasBeenSeen(){
+        return flooring.isEverSeen();
+    }
+    
+    public void setHasBeenSeen(){
+        setHasBeenSeen(true);
+    }
+    
+    public void setHasBeenSeen(boolean seen){
+        flooring.setEverSeen(seen);
+    }
 
-    public void setFlooring(BaseObject floor) {
+    public boolean isChanged(){
+        return changed;
+    }
+    
+    public void setChanged(boolean change){
+        changed = change;
+    }
+    
+    public void setChanged(){
+        setChanged(true);
+    }
+    
+    public void setFlooring(TerrainObject floor) {
         flooring = floor;
     }
 
     public void setFlooring() {
-        flooring = FloorObject.DEFAULT_FLOOR;
+        flooring = new FloorObject();
     }
 
     public void setMonster(MonsterObject mon) {
@@ -100,7 +120,7 @@ public class MapObject {
         Object obj = getTopObject();
         if (obj instanceof BaseObject) {
             BaseObject tempObj = (BaseObject) obj;
-            return tempObj.myName;
+            return tempObj.getName();
         }
         if (obj instanceof ItemObject) {
             return "an item";
@@ -142,19 +162,19 @@ public class MapObject {
     }
 
     public void objectOutput(BufferedWriter writer) throws IOException {
-        writer.write(flooring.objectOutput());
+        writer.write(flooring.outputObject());
         if (hasMonster()) {
-            writer.write(monster.objectOutput());
+            writer.write(monster.outputObject());
         }
         if (hasItem()) {
             for (int i = 0; i < items.size(); i++) {
-                items.get(i).objectOutput();
+                items.get(i).outputObject();
             }
         }
     }
 
     public void resetMe() {
-        flooring = DebugObject.DEFAULT;
+        flooring = null;
         monster = null;
         items = null;
     }
@@ -166,12 +186,8 @@ public class MapObject {
 
         if (currentType.equalsIgnoreCase("FoldObject")) {
             flooring = new FoldObject();
-        } else if (currentType.equalsIgnoreCase("DebugObject")) {
-            flooring = new DebugObject();
         } else if (currentType.equalsIgnoreCase("FloorObject")) {
             flooring = new FloorObject();
-        } else if (currentType.equalsIgnoreCase("NullObject")) {
-            flooring = new NullObject();
         } else if (currentType.equalsIgnoreCase("StairsObject")) {
             flooring = new StairsObject();
         } else if (currentType.equalsIgnoreCase("WallObject")) {

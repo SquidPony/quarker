@@ -14,7 +14,7 @@ import net.slashie.libjcsi.CSIColor;
  */
 public class MonsterObject extends BaseObject {
 
-    protected int hp, //current health of the monster
+    protected int mass, //current health of the monster
          damage, //amount of base damage the monster will do
          attack, //base chance of hit on attack
          defense, //base defense against attack
@@ -22,9 +22,6 @@ public class MonsterObject extends BaseObject {
          x,  y; //current x,y coordinates for the monster
     protected Vector<FeelingsObject> feelings = null;
     protected boolean awake = false; //will tell us if the monster is active, default is not active
-    /* The following constants are to make default monsters
-     * of the listed types
-     */
 
     MonsterObject() {
         super();
@@ -36,7 +33,7 @@ public class MonsterObject extends BaseObject {
         passable = mon.passable;
         frontColor = mon.frontColor;
         backColor = mon.backColor;
-        hp = mon.hp;
+        mass = mon.mass;
         damage = mon.damage;
         attack = mon.attack;
         defense = mon.defense;
@@ -50,7 +47,7 @@ public class MonsterObject extends BaseObject {
         this.myName = myName;
         this.represent = represent;
         this.passable = passable;
-        this.hp = hp;
+        this.mass = hp;
         this.damage = damage;
         this.attack = attack;
         this.defense = defense;
@@ -70,11 +67,11 @@ public class MonsterObject extends BaseObject {
     }
 
     public int getHp() {
-        return hp;
+        return mass;
     }
 
     public void applyDamage(int hurts) {
-        hp -= hurts;
+        mass -= hurts;
     }
 
     public int getDamage() {
@@ -98,10 +95,10 @@ public class MonsterObject extends BaseObject {
     }
 
     @Override
-    public String objectOutput() {// this should be overridden to ensure everything is saved correctly
+    public String outputObject() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
-        ret = "MonsterObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + hp + eol + damage + eol + attack + eol + defense + eol + satiation + eol + x + eol + y + eol + String.valueOf(awake) + eol + eol;
+        ret = "MonsterObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + mass + eol + damage + eol + attack + eol + defense + eol + satiation + eol + x + eol + y + eol + String.valueOf(awake) + eol + eol;
 
 
 //    private Vector<FeelingsObject> feelings = null; needs to be added when feelings are added
@@ -116,7 +113,7 @@ public class MonsterObject extends BaseObject {
             passable = reader.readLine().equalsIgnoreCase("true");
             frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
             visible = reader.readLine().equalsIgnoreCase("true");
-            hp = Integer.valueOf(reader.readLine());
+            mass = Integer.valueOf(reader.readLine());
             damage = Integer.valueOf(reader.readLine());
             attack = Integer.valueOf(reader.readLine());
             defense = Integer.valueOf(reader.readLine());
