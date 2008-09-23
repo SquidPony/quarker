@@ -26,7 +26,7 @@ public class StairsObject extends TerrainObject {
     }
 
     @Override
-    public String objectOutput() {// this should be overridden to ensure everything is saved correctly
+    public String outputObject() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = "StairsObject" + eol + 

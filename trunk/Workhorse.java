@@ -93,25 +93,34 @@ public class Workhorse {
 
     private void takeAction(CharKey thisKey) {  // this will feed control to the appropriate method based on player input
         if (thisKey.isArrow()) {
+
+            int r = player.getViewRange(),
+                x = currentLoc.x,
+                y = currentLoc.y;
+            boolean moved = false;
+
             if (thisKey.isUpArrow()) {
-                tryToMove(currentLoc.x, currentLoc.y - 1);
+                tryToMove(x, y - 1);
             } else if (thisKey.isUpRightArrow()) {
-                tryToMove(currentLoc.x + 1, currentLoc.y - 1);
+                tryToMove(x + 1, y - 1);
             } else if (thisKey.isRightArrow()) {
-                tryToMove(currentLoc.x + 1, currentLoc.y);
+                tryToMove(x + 1, y);
             } else if (thisKey.isDownRightArrow()) {
-                tryToMove(currentLoc.x + 1, currentLoc.y + 1);
+                tryToMove(x + 1, y + 1);
             } else if (thisKey.isDownArrow()) {
-                tryToMove(currentLoc.x, currentLoc.y + 1);
+                tryToMove(x, y + 1);
             } else if (thisKey.isDownLeftArrow()) {
-                tryToMove(currentLoc.x - 1, currentLoc.y + 1);
+                tryToMove(x - 1, y + 1);
             } else if (thisKey.isLeftArrow()) {
-                tryToMove(currentLoc.x - 1, currentLoc.y);
+                tryToMove(x - 1, y);
             } else if (thisKey.isUpLeftArrow()) {
-                tryToMove(currentLoc.x - 1, currentLoc.y - 1);
+                tryToMove(x - 1, y - 1);
             } else if (thisKey.isSelfArrow()) {
                 restTurn();
             }
+
+
+
         } else {
             switch (thisKey.code) {
                 case CharKey.ESC:
@@ -140,7 +149,7 @@ public class Workhorse {
     }
 
     private void runMonsterTurn() {
-        int x,  y;
+        int x, y;
         for (int i = 0; i < mapSizeX; i++) {
             for (int k = 0; k < mapSizeY; k++) {
                 if ((mapContents[i][k].hasMonster())) {
@@ -168,7 +177,7 @@ public class Workhorse {
                                 mapContents[i][k].setMonster(null);
                                 tempObj.setMonster(monObj);
                             } else {
-                                tellPlayer("The " + monObj.myName + " glares at the " + tempObj.getTopObjectName() + " that's in its way.");
+                                tellPlayer("The " + monObj.getName() + " glares at the " + tempObj.getTopObjectName() + " that's in its way.");
                             }
                         }
                     }
@@ -181,17 +190,17 @@ public class Workhorse {
         MonsterObject monster = mapContents[a][b].getMonster();
         int attack;
         attack = monster.getAttack();
-        if ((attack + rng.nextInt(10)) > (player.level * 3 + rng.nextInt(30))) {
-            player.hp -= monster.getDamage();
-            tellPlayer("The " + monster.myName + " reduced your mass by " + String.valueOf(monster.getDamage()) + " electrovolts!");
+        if ((attack + rng.nextInt(10)) > (player.getLevel() * 3 + rng.nextInt(30))) {
+            player.setMass(player.getMass() - monster.getDamage());
+            tellPlayer("The " + monster.getName() + " reduced your mass by " + String.valueOf(monster.getDamage()) + " electrovolts!");
         } else {
-            tellPlayer("The " + monster.myName + " missed you.");
+            tellPlayer("The " + monster.getName() + " missed you.");
         }
     }
 
     private void levelUp() {
-        player.nextSize = (int) quarkLevels.levels.removeFirst();
-        player.level++;
+        player.setNextSize((int) quarkLevels.levels.removeFirst());
+        player.setLevel(player.getLevel() + 1);
         tellPlayer("You have grown larger!");
     }
 
@@ -205,12 +214,12 @@ public class Workhorse {
     }
 
     private void checkStats() {
-        if (player.hp < 1) {
+        if (player.getMass() < 1) {
             tellPlayer("You have become massless and unable to effect your surroundings.");
             leaving();
 
         }
-        if (player.size >= player.nextSize) {
+        if (player.getSize() >= player.getNextSize()) {
             levelUp();
         }
     }
@@ -304,6 +313,7 @@ public class Workhorse {
 
         if (newObj.isPassable()) {
             currentLoc.move(a, b);
+            checkVisibility();
         } else {
             if (newObj.hasMonster()) {
                 if (doFight(newObj.getMonster())) {
@@ -319,32 +329,96 @@ public class Workhorse {
     public boolean doFight(MonsterObject monster) {
 
 
-        int r,  i;
+        int r, i;
 
         r = rng.nextInt(100);
-        r = r + player.level * 5 - monster.getDefense();
+        r = r + player.getLevel() * 5 - monster.getDefense();
 
         monster.wakeUp(); //attacking will cause the monster to wake up, even if not hit
 
         if (r < 50) {
             //miss
-            tellPlayer("You missed the " + monster.myName);
+            tellPlayer("You missed the " + monster.getName());
             return false;
         } else {
-            i = rng.nextInt(player.level * 4);
+            i = rng.nextInt(player.getLevel() * 4);
             if (i <= 0) {
-                tellPlayer("You hit the " + monster.myName + ", but didn't effect it!");
+                tellPlayer("You hit the " + monster.getName() + ", but didn't effect it!");
             } else {
-                tellPlayer("You hit the " + monster.myName + " causing it to lose " + i + " electronvolts of mass.");
+                tellPlayer("You hit the " + monster.getName() + " causing it to lose " + i + " electronvolts of mass.");
                 monster.applyDamage(i);
             }
 
             if (monster.getHp() < 0) {//swallow!
-                tellPlayer("You absorbed the " + monster.myName + "!");
-                player.size += monster.getSatiation();
+                tellPlayer("You absorbed the " + monster.getName() + "!");
+                player.setSize(player.getSize() + monster.getSatiation());
                 return true;
             } else {
                 return false;
+            }
+        }
+    }
+
+    private void checkVisibility() {
+        int r = player.getViewRange();
+        MapObject map;
+        int x = currentLoc.x, y = currentLoc.y;
+        int minx = Math.max(0, (x - r - 2));
+        int maxx = Math.min(mapSizeX, x + r + 2);
+        int miny = Math.max(0, (y - r - 2));
+        int maxy = Math.min(mapSizeY, y + r + 2);
+        for (int k = minx; k < maxx; k++) {
+            for (int i = miny; i < maxy; i++) {
+                map = mapContents[k][i];
+                if (Math.pow(k - x, 2) + Math.pow(i - y, 2) <= Math.pow(r, 2)) {
+                    map.setVisible();
+                map.setHasBeenSeen();
+                } else {
+                    map.setVisible(false);
+                }
+                map.setChanged();
+            }
+        }
+    }
+
+    private void initVisibility() {
+        int r = player.getViewRange();
+        MapObject map;
+        int x = currentLoc.x, y = currentLoc.y;
+        for (int k = 0; k < x; k++) {
+            for (int i = 0; i < y; i++) {
+                map = mapContents[k][i];
+                if (Math.pow(k - x, 2) + Math.pow(i - y, 2) <= Math.pow(r, 2)) {
+                    map.setVisible();
+                } else {
+                    map.setVisible(false);
+                }
+                map.setChanged();
+                map.setHasBeenSeen(false);
+            }
+        }
+    }
+
+    private void cleanDisplay() {
+        String beol = " XXX ";//end of line for TextBox
+        BaseObject nowContents;
+        MapObject map;
+        for (int k = 0; k < mapSizeX; k++) {
+            for (int i = 0; i < mapSizeY; i++) {
+                map = mapContents[k][i];
+                if (map.hasBeenSeen()) {
+                    if (map.isVisible()) {
+                        nowContents = map.getTopObject();
+                        mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
+                    } else {
+                        nowContents = map.getFlooring();
+                        mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
+                    }
+                } else {
+                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
+                }
+
+                map.setChanged(false);
             }
         }
     }
@@ -353,18 +427,37 @@ public class Workhorse {
 
         String beol = " XXX ";//end of line for TextBox
         BaseObject nowContents;
+        MapObject map;
+
         for (int k = 0; k < mapSizeX; k++) {
             for (int i = 0; i < mapSizeY; i++) {
-                nowContents = mapContents[k][i].getTopObject();
-                mainInterface.print(k, i + 2, nowContents.represent, nowContents.frontColor);
+                map = mapContents[k][i];
+                if (map.hasBeenSeen()) {
+                    if (map.isChanged()) {
+                        if (map.isVisible()) {
+                            nowContents = map.getTopObject();
+                            mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
+                        } else {
+                            nowContents = map.getFlooring();
+                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
+                        }
+                    }
+                    map.setChanged(false);
+                } else {
+                        mainInterface.print(k, i, ' ', CSIColor.BLACK);
+                    }
             }
         }
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
         infoBox.draw();
         statsBox.setText(
-            beol + "Mass: " + beol + player.hp + beol + beol + "Size: " + beol + player.level + beol + beol + "Xp: " + beol + player.size + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
         statsBox.draw();
         mainInterface.refresh();
+    }
+
+    private CSIColor faded(CSIColor color) {
+        return checkColorList(new CSIColor(Math.max(0, (color.getR() - 80)), Math.max(0, color.getG() - 80), Math.max(0, color.getB() - 80)));
     }
 
     private CSIColor checkColorList(CSIColor color) {
@@ -428,27 +521,8 @@ public class Workhorse {
                 if (tempObj.isFloor()) {
                     r = rng.nextInt(25); //about 1/25th of the tiles will have an enemy
                     if (r == 0) {
-                        if (mapLevel < 3) {
-                            r = rng.nextInt(750) + 250;
-                        } else if (mapLevel < 5) {
-                            r = rng.nextInt(300) + 10;
-                        } else {
-                            r = rng.nextInt(75);
-                        }
-                        if (r < 15) {
-                            tempObj.setMonster(new QuarkObject(QuarkObject.TRUTH));
-                        } else if (r < 40) {
-                            tempObj.setMonster(new QuarkObject(QuarkObject.BEAUTY));
-                        } else if (r < 100) {
-                            tempObj.setMonster(new QuarkObject(QuarkObject.CHARM));
-                        } else if (r < 300) {
-                            tempObj.setMonster(new QuarkObject(QuarkObject.STRANGE));
-                        } else if (r < 600) {
-                            tempObj.setMonster(new QuarkObject(QuarkObject.UP));
-                        } else {
-                            tempObj.setMonster(new QuarkObject(QuarkObject.DOWN));
-                        }
-                    } //else {mapContents[i][k] = new FloorObject();}
+                        tempObj.setMonster(new QuarkObject(mapLevel));
+                    }
                 }
             }
         }
@@ -534,6 +608,7 @@ public class Workhorse {
             buildMap();
             tellPlayer("You travel backwards through the wormhole to the last spacetime area you were in. The wormhole collapses behind you.");
         }
+        initVisibility();
         displayMap();
     }
 
@@ -547,13 +622,14 @@ public class Workhorse {
 
         buildMap();
         buildDisplay();
+        initVisibility();
         displayMap(); //show the map for the first time
 
     }
 
     private void buildMap() {//this will build all of the elements of the map
 
-        int blockX,  blockY,  x,  y; //these will be our random numbers when we need them
+        int blockX,   blockY,   x,   y; //these will be our random numbers when we need them
 
         //initiates the mapContents
         for (int i = 0; i < (mapSizeX); i++) {
@@ -603,6 +679,9 @@ public class Workhorse {
 
     private void getPlayerName() {
         player.myName = askPlayer(1, "Please enter the particle's name. ");
+        initVisibility();
+        cleanDisplay();
+        checkVisibility();
         displayMap();
     }
 
@@ -625,7 +704,7 @@ public class Workhorse {
                     mapContents[i][k].objectOutput(writer);
                 }
             }
-            writer.write(player.objectOutput());
+            writer.write(player.outputObject());
             writer.write("currentLoc.x: " + eol + currentLoc.x + eol + eol);
             writer.write("currentLoc.y: " + eol + currentLoc.y + eol + eol);
             writer.write("mapLevel:" + eol + mapLevel + eol + eol);
