@@ -26,7 +26,7 @@ public class StairsObject extends TerrainObject {
     }
 
     @Override
-    public String outputObject() {// this should be overridden to ensure everything is saved correctly
+    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = "StairsObject" + eol + 
@@ -40,7 +40,7 @@ public class StairsObject extends TerrainObject {
     }
 
     @Override
-    public void pushObject(BufferedReader reader) {
+    public void inputObjectFromFile(BufferedReader reader) {
         try {
             myName = reader.readLine();
             represent = reader.readLine().charAt(0);
