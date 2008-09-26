@@ -162,13 +162,13 @@ public class MapObject {
     }
 
     public void objectOutput(BufferedWriter writer) throws IOException {
-        writer.write(flooring.outputObject());
+        writer.write(flooring.outputObjectToFile());
         if (hasMonster()) {
-            writer.write(monster.outputObject());
+            writer.write(monster.outputObjectToFile());
         }
         if (hasItem()) {
             for (int i = 0; i < items.size(); i++) {
-                items.get(i).outputObject();
+                items.get(i).outputObjectToFile();
             }
         }
     }
@@ -196,13 +196,13 @@ public class MapObject {
             throw new IOException("Object not known.");
         }
 
-        flooring.pushObject(reader);
+        flooring.inputObjectFromFile(reader);
         reader.readLine(); //gets rid of readability space between entries
         currentType = reader.readLine();
         
         if (currentType.equals("MonsterObject")) {
             monster = new MonsterObject();
-            monster.pushObject(reader);
+            monster.inputObjectFromFile(reader);
             reader.readLine(); //gets rid of readability space between entries
             currentType = reader.readLine();
         }
@@ -212,7 +212,7 @@ public class MapObject {
             ItemObject tempItem;
             do {
                 tempItem = new ItemObject();
-                tempItem.pushObject(reader);
+                tempItem.inputObjectFromFile(reader);
                 items.add(tempItem);
                 reader.readLine(); //gets rid of readability space between entries
                 currentType = reader.readLine();

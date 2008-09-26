@@ -704,7 +704,7 @@ public class Workhorse {
                     mapContents[i][k].objectOutput(writer);
                 }
             }
-            writer.write(player.outputObject());
+            writer.write(player.outputObjectToFile());
             writer.write("currentLoc.x: " + eol + currentLoc.x + eol + eol);
             writer.write("currentLoc.y: " + eol + currentLoc.y + eol + eol);
             writer.write("mapLevel:" + eol + mapLevel + eol + eol);
@@ -751,7 +751,7 @@ public class Workhorse {
                     }
                 }
 
-                player.pushObject(reader);
+                player.inputObjectFromFile(reader);
                 reader.readLine(); //gets rid of empty space between objects
                 reader.readLine(); //gets rid of entry title
                 currentLoc.x = Integer.valueOf(reader.readLine());

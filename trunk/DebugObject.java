@@ -19,7 +19,7 @@ public class DebugObject extends BaseObject {
     }
 
     @Override
-    public String outputObject() {// this should be overridden to ensure everything is saved correctly
+    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = "DebugObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;
@@ -27,7 +27,7 @@ public class DebugObject extends BaseObject {
     }
     
     @Override
-        public void pushObject(BufferedReader reader) {
+        public void inputObjectFromFile(BufferedReader reader) {
         try {
             myName = reader.readLine();
             represent = reader.readLine().charAt(0);

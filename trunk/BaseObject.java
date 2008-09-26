@@ -41,25 +41,44 @@ public class BaseObject {
         this.backColor = backColor;
     }
 
-    public String outputObject() {// this should be overridden to ensure everything is saved correctly
+    /*
+     *This should be overridden by inheriting classes in order to provide additional output 
+     * to the save file
+     */
+    String additionalOutput() {
+        return "";
+    }
+
+    /*
+     *This should be overridden by inheriting classes in order to provide additional output 
+     * to the save file
+     */
+    String classNameOutput() {
+        return "GameObject";
+    }
+
+    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
-        ret = "GameObject" + eol + myName + eol + represent + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;
+        ret = classNameOutput() + eol + myName + eol + represent + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;
+        ret = ret + additionalOutput() + eol;
         return ret;
     }
 
-    public void pushObject(BufferedReader reader) {
-        try {
-            myName = reader.readLine();
-            represent = reader.readLine().charAt(0);
-            passable = reader.readLine().equalsIgnoreCase("true");
-            frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
-            visible = reader.readLine().equalsIgnoreCase("true");
-        } catch (IOException ioe) {
-            System.out.println("Fatal error reading from file!");
-            ioe.printStackTrace();
-            return;
-        }
+    /*
+     *This should be overridden by inheriting classes in order to provide additional input 
+     * from the save file
+     */
+    void additionalInput(BufferedReader reader) throws IOException {//doesn't do anything in the base class
+    }
+
+    public void inputObjectFromFile(BufferedReader reader) throws IOException {
+        myName = reader.readLine();
+        represent = reader.readLine().charAt(0);
+        passable = reader.readLine().equalsIgnoreCase("true");
+        frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
+        visible = reader.readLine().equalsIgnoreCase("true");
+        additionalInput(reader);
     }
 
     public String getName() {

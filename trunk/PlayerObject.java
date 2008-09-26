@@ -24,7 +24,7 @@ public class PlayerObject extends BaseObject {
     }
 
     @Override
-    public String outputObject() {// this should be overridden to ensure everything is saved correctly
+    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = "GameObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + getMass() + eol + getMaxHp() + eol + getSize() + eol + getLevel() + eol + getNextSize() + eol + eol;
@@ -32,7 +32,7 @@ public class PlayerObject extends BaseObject {
     }
 
     @Override
-    public void pushObject(BufferedReader reader) {
+    public void inputObjectFromFile(BufferedReader reader) {
         try {
             myName = reader.readLine();
             represent = reader.readLine().charAt(0);
