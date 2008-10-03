@@ -4,7 +4,6 @@
  */
 package my.quarker;
 
-import java.io.*;
 import net.slashie.libjcsi.CSIColor;
 
 /**
@@ -26,35 +25,6 @@ public class TerrainObject extends BaseObject {
 
     public TerrainObject(String name, char represent, boolean passable, CSIColor color) {
         super(name, represent, passable, color);
-    }
-
-    @Override
-    String additionalOutput() {
-        return String.valueOf(everSeen);
-    }
-
-    @Override
-    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
-        String ret = "";
-        String eol = System.getProperty("line.separator");
-        ret = super.outputObjectToFile();
-        ret = ret + additionalOutput() + eol;
-        return ret;
-    }
-
-    @Override
-    void additionalInput( BufferedReader reader) throws IOException {
-        everSeen = reader.readLine().equalsIgnoreCase("true");
-    }
-
-    @Override
-    public void inputObjectFromFile(BufferedReader reader) throws IOException {
-        myName = reader.readLine();
-        represent = reader.readLine().charAt(0);
-        passable = reader.readLine().equalsIgnoreCase("true");
-        frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
-        visible = reader.readLine().equalsIgnoreCase("true");
-        additionalInput(reader);
     }
 
     public boolean isEverSeen() {

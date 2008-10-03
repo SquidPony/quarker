@@ -69,6 +69,30 @@ public class Workhorse {
         return askPlayer(lines, question, CSIColor.WHITE);
     }
 
+    public void notifyPlayer(int lines, String notification, CSIColor color) {
+        int x, y;
+        mainInterface.saveBuffer();
+
+        DialogBox dialog = new DialogBox(mainInterface, lines, notification);
+        dialog.setForeColor(color);
+        x = (mainInterface.xdim / 2) - (dialog.getWidth() / 2);
+        y = (mainInterface.ydim / 2) - (dialog.getHeight() / 2);
+        dialog.setPosition(x, y);
+
+        dialog.setText(notification);
+        mainInterface.locateCaret(x + 2, y + lines + 2);
+        dialog.draw();
+        mainInterface.refresh();
+
+        mainInterface.inkey();
+        mainInterface.restore();
+        mainInterface.refresh();
+    }
+
+    public void notifyPlayer(int lines, String notification) {
+        notifyPlayer(lines, notification, CSIColor.WHITE);
+    }
+
     private void playerTurn() {// this will get the player's input and launch the method that checks what was input
         CharKey actionKey = new CharKey();
 
@@ -359,22 +383,51 @@ public class Workhorse {
         }
     }
 
+    private boolean isLOSVisible(int startX, int startY, int lookX, int lookY) {
+        if ((startX == lookX) && (startY == lookY)) {
+            return true;
+        }
+        if (mapContents[startX][startY].isWall()) {
+            return false;
+        }
+        int moveX = 0, moveY = 0;
+        if (lookX < startX) {
+            moveX = -1;
+        }
+        if (lookX > startX) {
+            moveX = 1;
+        }
+        if (lookY < startY) {
+            moveY = -1;
+        }
+        if (lookY > startY) {
+            moveY = 1;
+        }
+            return isLOSVisible(startX + moveX, startY + moveY, lookX, lookY);
+    }
+
     private void checkVisibility() {
         int r = player.getViewRange();
-        MapObject map;
         int x = currentLoc.x, y = currentLoc.y;
+        MapObject map;
         int minx = Math.max(0, (x - r - 2));
         int maxx = Math.min(mapSizeX, x + r + 2);
         int miny = Math.max(0, (y - r - 2));
         int maxy = Math.min(mapSizeY, y + r + 2);
+        ArrayList<Integer> slopes = new ArrayList<Integer>();
+
         for (int k = minx; k < maxx; k++) {
             for (int i = miny; i < maxy; i++) {
                 map = mapContents[k][i];
                 if (Math.pow(k - x, 2) + Math.pow(i - y, 2) <= Math.pow(r, 2)) {
-                    map.setVisible();
-                map.setHasBeenSeen();
+                    if (isLOSVisible(x, y, k, i)) {
+                        map.setVisible(100);
+                        map.setHasBeenSeen();
+                    } else {
+                        map.setVisible(0);
+                    }
                 } else {
-                    map.setVisible(false);
+                    map.setVisible(0);
                 }
                 map.setChanged();
             }
@@ -389,9 +442,9 @@ public class Workhorse {
             for (int i = 0; i < y; i++) {
                 map = mapContents[k][i];
                 if (Math.pow(k - x, 2) + Math.pow(i - y, 2) <= Math.pow(r, 2)) {
-                    map.setVisible();
+                    map.setVisible(100);
                 } else {
-                    map.setVisible(false);
+                    map.setVisible(0);
                 }
                 map.setChanged();
                 map.setHasBeenSeen(false);
@@ -444,8 +497,8 @@ public class Workhorse {
                     }
                     map.setChanged(false);
                 } else {
-                        mainInterface.print(k, i, ' ', CSIColor.BLACK);
-                    }
+                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
+                }
             }
         }
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
@@ -551,7 +604,7 @@ public class Workhorse {
             return;
         }
         if (!(mapContents[x][y].isWall())) {
-            mapContents[x][y].setVisible();
+            mapContents[x][y].setVisible(100);
             for (int i = -1; i < 2; i++) {
                 for (int k = -1; k < 2; k++) {
                     floodFill(x + i, y + k);
@@ -629,7 +682,7 @@ public class Workhorse {
 
     private void buildMap() {//this will build all of the elements of the map
 
-        int blockX,   blockY,   x,   y; //these will be our random numbers when we need them
+        int blockX, blockY, x, y; //these will be our random numbers when we need them
 
         //initiates the mapContents
         for (int i = 0; i < (mapSizeX); i++) {
@@ -686,97 +739,98 @@ public class Workhorse {
     }
 
     private void saveGame() {
-        String fileName;
-        fileName = player.myName + ".txt";
-        BufferedWriter writer;
-
-        try {
-            writer = FileUtil.getWriter(fileName);
-
-        } catch (IOException ioe) {
-            System.out.println("Fatal Error Opening Writer for " + fileName);
-            ioe.printStackTrace();
-            return;
-        }
-        try {
-            for (int i = 0; i < mapSizeX; i++) {
-                for (int k = 0; k < mapSizeY; k++) {
-                    mapContents[i][k].objectOutput(writer);
-                }
-            }
-            writer.write(player.outputObjectToFile());
-            writer.write("currentLoc.x: " + eol + currentLoc.x + eol + eol);
-            writer.write("currentLoc.y: " + eol + currentLoc.y + eol + eol);
-            writer.write("mapLevel:" + eol + mapLevel + eol + eol);
-            writer.write("xpLevels:" + eol);
-            for (Integer xp : quarkLevels.levels) {
-                writer.write(xp + eol);
-            }
-            writer.write(eol);
-            writer.close();
-        } catch (IOException ioe) {
-            System.out.println("Fatal Error writing to " + fileName);
-            ioe.printStackTrace();
-            return;
-        }
-        tellPlayer("Spacetime Continuum Saved!");
+//        String fileName;
+//        fileName = player.myName + ".txt";
+//        BufferedWriter writer;
+//
+//        try {
+//            writer = FileUtil.getWriter(fileName);
+//
+//        } catch (IOException ioe) {
+//            System.out.println("Fatal Error Opening Writer for " + fileName);
+//            ioe.printStackTrace();
+//            return;
+//        }
+//        try {
+//            for (int i = 0; i < mapSizeX; i++) {
+//                for (int k = 0; k < mapSizeY; k++) {
+//                    mapContents[i][k].objectOutput(writer);
+//                }
+//            }
+//            writer.write(player.outputObjectToFile());
+//            writer.write("currentLoc.x: " + eol + currentLoc.x + eol + eol);
+//            writer.write("currentLoc.y: " + eol + currentLoc.y + eol + eol);
+//            writer.write("mapLevel:" + eol + mapLevel + eol + eol);
+//            writer.write("xpLevels:" + eol);
+//            for (Integer xp : quarkLevels.levels) {
+//                writer.write(xp + eol);
+//            }
+//            writer.write(eol);
+//            writer.close();
+//        } catch (IOException ioe) {
+//            System.out.println("Fatal Error writing to " + fileName);
+//            ioe.printStackTrace();
+//            return;
+//        }
+//        tellPlayer("Spacetime Continuum Saved!");
+        tellPlayer("Saving is currently disabled.");
     }
 
     private void loadGame() {
-        String fileName;
-        getPlayerName();
-        fileName = player.myName + ".txt";
-        BufferedReader reader = null;
-        String currentType;
-        MapObject oldObj = new MapObject();
-
-        try {
-            reader = FileUtil.getReader(fileName);
-
-        } catch (IOException ioe) {
-            askPlayer(2, "File does not exist. Press Enter to continue.");
-            displayMap();
-        }
-        if (reader != null) {
-            try {
-                currentType = reader.readLine();
-                for (int i = 0; i < mapSizeX; i++) {
-                    for (int k = 0; k < mapSizeY; k++) {
-//                        tellPlayer("currently: " + i + " " + k + ", last: " + oldObj.getTopObjectName() + " "); // for debugging
-                        mapContents[i][k].pushObject(reader, currentType);
-//                        oldObj = mapContents[i][k]; // for debugging
-//                        displayMap(); // for debugging
-//                        mainInterface.refresh(); // for debugging
-
-                    }
-                }
-
-                player.inputObjectFromFile(reader);
-                reader.readLine(); //gets rid of empty space between objects
-                reader.readLine(); //gets rid of entry title
-                currentLoc.x = Integer.valueOf(reader.readLine());
-                reader.readLine(); //gets rid of empty space between objects
-                reader.readLine(); //gets rid of entry title
-                currentLoc.y = Integer.valueOf(reader.readLine());
-                reader.readLine(); //gets rid of empty space between objects
-                reader.readLine(); //gets rid of entry title
-                mapLevel = Integer.valueOf(reader.readLine());
-                reader.readLine(); //gets rid of empty space between objects
-                reader.readLine(); //gets rid of entry title
-                quarkLevels.pushObject(reader);
-                reader.close();
-
-                FileUtil.deleteFile(fileName);
-
-                displayMap();
-                mainInterface.refresh();
-                tellPlayer("Spacetime Continuum Restored.");
-            } catch (IOException ioe) {
-                System.out.println("Fatal Error reading from " + fileName + " " + ioe.getMessage());
-                ioe.printStackTrace();
-                return;
-            }
-        }
-
+//        String fileName;
+//        getPlayerName();
+//        fileName = player.myName + ".txt";
+//        BufferedReader reader = null;
+//        String currentType;
+//        MapObject oldObj = new MapObject();
+//
+//        try {
+//            reader = FileUtil.getReader(fileName);
+//
+//        } catch (IOException ioe) {
+//            askPlayer(2, "File does not exist. Press Enter to continue.");
+//            displayMap();
+//        }
+//        if (reader != null) {
+//            try {
+//                currentType = reader.readLine();
+//                for (int i = 0; i < mapSizeX; i++) {
+//                    for (int k = 0; k < mapSizeY; k++) {
+////                        tellPlayer("currently: " + i + " " + k + ", last: " + oldObj.getTopObjectName() + " "); // for debugging
+//                        mapContents[i][k].pushObject(reader, currentType);
+////                        oldObj = mapContents[i][k]; // for debugging
+////                        displayMap(); // for debugging
+////                        mainInterface.refresh(); // for debugging
+//
+//                    }
+//                }
+//
+//                player.inputObjectFromFile(reader);
+//                reader.readLine(); //gets rid of empty space between objects
+//                reader.readLine(); //gets rid of entry title
+//                currentLoc.x = Integer.valueOf(reader.readLine());
+//                reader.readLine(); //gets rid of empty space between objects
+//                reader.readLine(); //gets rid of entry title
+//                currentLoc.y = Integer.valueOf(reader.readLine());
+//                reader.readLine(); //gets rid of empty space between objects
+//                reader.readLine(); //gets rid of entry title
+//                mapLevel = Integer.valueOf(reader.readLine());
+//                reader.readLine(); //gets rid of empty space between objects
+//                reader.readLine(); //gets rid of entry title
+//                quarkLevels.pushObject(reader);
+//                reader.close();
+//
+//                FileUtil.deleteFile(fileName);
+//
+//                displayMap();
+//                mainInterface.refresh();
+//                tellPlayer("Spacetime Continuum Restored.");
+//            } catch (IOException ioe) {
+//                System.out.println("Fatal Error reading from " + fileName + " " + ioe.getMessage());
+//                ioe.printStackTrace();
+//                return;
+//            }
+//        }
+        tellPlayer("Loading currently disabled.");
     }
 }

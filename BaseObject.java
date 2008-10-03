@@ -18,8 +18,10 @@ public class BaseObject {
     boolean passable;
     CSIColor frontColor;
     CSIColor backColor;
-    boolean visible = false;
+    double visible = 0;
     static final CSIColor DEFAULT_FRONT_COLOR = CSIColor.WHITE,  DEFAULT_BACK_COLOR = CSIColor.BLACK;
+    int sizeUsed;
+    static final int MINIMUM = 1, SMALL = 25, MEDIUM = 50, LARGE = 75, MAXIMUM = 100; //guidlines for object size in spaces
 
     public BaseObject() { //default is creating a basic wall
         this("unknown", '?', false, DEFAULT_FRONT_COLOR);
@@ -39,6 +41,7 @@ public class BaseObject {
         this.passable = passable;
         this.frontColor = myColor;
         this.backColor = backColor;
+        sizeUsed = MEDIUM;
     }
 
     /*
@@ -77,7 +80,7 @@ public class BaseObject {
         represent = reader.readLine().charAt(0);
         passable = reader.readLine().equalsIgnoreCase("true");
         frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
-        visible = reader.readLine().equalsIgnoreCase("true");
+        visible = Double.valueOf(reader.readLine());
         additionalInput(reader);
     }
 
@@ -132,21 +135,21 @@ public class BaseObject {
     }
 
     public boolean isVisible() {
-        return visible;
+        return (visible > 0);
     }
 
-    public void setVisible() {
-        setVisible(true);
-    }
-
-    public void setVisible(boolean val) {
+    public void setVisible(double val) {
         visible = val;
+    }
+    
+    public Double getVisible(){
+        return visible;
     }
 
     public boolean equals(BaseObject obj) {
         return ((myName.equals(obj.myName)) && (represent == obj.getRepresentation()) &&
             (passable == obj.isPassable()) && (frontColor.equals(obj.getFrontColor())) &&
-            backColor.equals(obj.getBackColor()) && (visible == obj.isVisible()));
+            backColor.equals(obj.getBackColor()) && (visible == obj.getVisible()));
     }
 }
 
