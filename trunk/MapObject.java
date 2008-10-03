@@ -140,25 +140,25 @@ public class MapObject {
     }
 
     public boolean isVisible() {
-        if (!flooring.visible) {
+        if (flooring.visible == 0) {
             return false;
         } else if (hasMonster()) {
-            if (!monster.visible) {
+            if (monster.visible == 0) {
                 return false;
             }
         }
         return true;
     }
     
-    public void setVisible(){
-        setVisible(true);
-    }
-    
-    public void setVisible(boolean vis){
+    public void setVisible(double vis){
         flooring.visible = vis;
         if (hasMonster()){
             monster.visible = vis;
         }
+    }
+    
+    public double getVisible(){
+        return Math.max(Math.max(0, monster.getVisible()), flooring.getVisible());
     }
 
     public void objectOutput(BufferedWriter writer) throws IOException {

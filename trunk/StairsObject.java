@@ -1,8 +1,5 @@
 package my.quarker;
 
-import java.io.*;
-import net.slashie.libjcsi.CSIColor;
-
 public class StairsObject extends TerrainObject {
 
     boolean down = true; //if it's an up stair, this will be false
@@ -13,7 +10,7 @@ public class StairsObject extends TerrainObject {
 
     public StairsObject(boolean goingDown) {
         passable = true;
-        visible = true;
+        visible = 100;
         if (goingDown) {
             myName = "spacetime advancing wormhole";
             represent = '>';
@@ -22,36 +19,6 @@ public class StairsObject extends TerrainObject {
             myName = "spacetime retracting wormhole";
             represent = '<';
             down = false;
-        }
-    }
-
-    @Override
-    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
-        String ret = "";
-        String eol = System.getProperty("line.separator");
-        ret = "StairsObject" + eol + 
-            myName + eol + 
-            String.valueOf(represent) + eol + 
-            String.valueOf(passable) + eol + 
-            frontColor.getColor() + eol + 
-            String.valueOf(visible) + eol + 
-            String.valueOf(down) + eol;//for some unknown reason, the last line being read doesn't get stripped so this is a kludge (removing the usual trailing + eol) to fix that bug.  I must figure out why it's happening and stop it though!
-        return ret;
-    }
-
-    @Override
-    public void inputObjectFromFile(BufferedReader reader) {
-        try {
-            myName = reader.readLine();
-            represent = reader.readLine().charAt(0);
-            passable = reader.readLine().equalsIgnoreCase("true");
-            frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
-            visible = reader.readLine().equalsIgnoreCase("true");
-            down = reader.readLine().equalsIgnoreCase("true");
-        } catch (IOException ioe) {
-            System.out.println("Fatal error reading from file!");
-            ioe.printStackTrace();
-            return;
         }
     }
 }

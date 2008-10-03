@@ -23,34 +23,6 @@ public class PlayerObject extends BaseObject {
         super("Player", '@', true, CSIColor.WHITE);
     }
 
-    @Override
-    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
-        String ret = "";
-        String eol = System.getProperty("line.separator");
-        ret = "GameObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + getMass() + eol + getMaxHp() + eol + getSize() + eol + getLevel() + eol + getNextSize() + eol + eol;
-        return ret;
-    }
-
-    @Override
-    public void inputObjectFromFile(BufferedReader reader) {
-        try {
-            myName = reader.readLine();
-            represent = reader.readLine().charAt(0);
-            passable = reader.readLine().equalsIgnoreCase("true");
-            frontColor = new CSIColor(Integer.valueOf(reader.readLine()));
-            visible = reader.readLine().equalsIgnoreCase("true");
-            setMass((int) Integer.valueOf(reader.readLine()));
-            setMaxHp((int) Integer.valueOf(reader.readLine()));
-            setSize((int) Integer.valueOf(reader.readLine()));
-            setLevel((int) Integer.valueOf(reader.readLine()));
-            setNextSize((int) Integer.valueOf(reader.readLine()));
-        } catch (IOException ioe) {
-            System.out.println("Fatal error reading from file!");
-            ioe.printStackTrace();
-            return;
-        }
-    }
-
     public int getMass() {
         return mass;
     }
