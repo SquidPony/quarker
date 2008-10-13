@@ -158,7 +158,11 @@ public class MapObject {
     }
     
     public double getVisible(){
-        return Math.max(Math.max(0, monster.getVisible()), flooring.getVisible());
+        if (hasMonster()){
+        return Math.max(Math.max(0, monster.getVisible()), flooring.getVisible());}
+        else{
+            return Math.max(0, flooring.getVisible());
+        }
     }
 
     public void objectOutput(BufferedWriter writer) throws IOException {
