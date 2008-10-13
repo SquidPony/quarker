@@ -28,6 +28,12 @@ public class Workhorse {
     private PlayerObject player = new PlayerObject();
     private ArrayList<CSIColor> colorList = new ArrayList<CSIColor>();
     private String eol = System.getProperty("line.separator");
+    static final private int[][] FOV_MULTIPLIER = {
+        {1, 0, 0, -1, -1, 0, 0, 1},
+        {0, 1, -1, 0, 0, -1, 1, 0},
+        {0, 1, 1, 0, 0, -1, -1, 0},
+        {1, 0, 0, 1, -1, 0, 0, -1},
+    };
 
     public Workhorse() {
         try {
@@ -94,6 +100,7 @@ public class Workhorse {
     }
 
     private void playerTurn() {// this will get the player's input and launch the method that checks what was input
+
         CharKey actionKey = new CharKey();
 
         do {
@@ -104,9 +111,12 @@ public class Workhorse {
     }
 
     private void runTurn() { // here is where everything happens after the player does something which takes time
+
         runMonsterTurn();
         checkStats(); // this will see if the player has leveled up or maybe died.
+
         displayMap(); // this should most likey be the last thing that happens before the player gets to go again
+
         mainInterface.refresh();
     }
 
@@ -116,6 +126,7 @@ public class Workhorse {
     }
 
     private void takeAction(CharKey thisKey) {  // this will feed control to the appropriate method based on player input
+
         if (thisKey.isArrow()) {
 
             int r = player.getViewRange(),
@@ -337,7 +348,8 @@ public class Workhorse {
 
         if (newObj.isPassable()) {
             currentLoc.move(a, b);
-            checkVisibility();
+//            checkVisibility();
+            doFov(currentLoc.x, currentLoc.y, player.getViewRange());
         } else {
             if (newObj.hasMonster()) {
                 if (doFight(newObj.getMonster())) {
@@ -374,11 +386,82 @@ public class Workhorse {
             }
 
             if (monster.getHp() < 0) {//swallow!
+
                 tellPlayer("You absorbed the " + monster.getName() + "!");
                 player.setSize(player.getSize() + monster.getSatiation());
                 return true;
             } else {
                 return false;
+            }
+        }
+    }
+
+    private void doFov(int startX, int startY, int radius) {
+
+        mapContents[startX][startY].setVisible(100);
+        for (int i = 0; i < 8; i++) {
+            castLight(startX, startY, 1, 1.0, 0.0, radius,
+                FOV_MULTIPLIER[0][i], FOV_MULTIPLIER[1][i],
+                FOV_MULTIPLIER[2][i], FOV_MULTIPLIER[3][i], 0);
+        }
+//        castLight(startX, startY, 1, 1.0, 0.0, radius,
+//            1, 0, 0, 1, 0); //testing
+    }
+
+    private void castLight(int cx, int cy, int row, double lightStart, double lightEnd, int radius, int xx, int xy, int yx, int yy, int id) {
+        if (lightStart < lightEnd) {
+            return;
+        }
+        double radius2 = Math.pow(radius, 2), lSlope, rSlope, newStart = 0;
+        int dx, dy, mx, my;
+        boolean blocked;
+        for (int i = row; i <= radius; i++) {
+            dx = -i - 1;
+            dy = -i;
+            blocked = false;
+            while (dx <= 0) {
+                dx += 1;
+//                # Translate the dx, dy co-ordinates into map co-ordinates
+                mx = cx + dx * xx + dy * xy;
+                my = cy + dx * yx + dy * yy;
+//                # l_slope and r_slope store the slopes of the left and right
+//                # extremities of the square we're considering:
+                lSlope = (dx - 0.5) / (dy + 0.5);
+                rSlope = (dx + 0.5) / (dy - 0.5);
+                if (lightStart < rSlope) {
+                    continue;
+                } else if (lightEnd > lSlope) {
+                    break;
+                } else {
+//                    # Our light beam is touching this square; light it
+                    if ((dx * dx + dy * dy) < radius2) {
+                        mapContents[mx][my].setVisible(100);
+                        mapContents[mx][my].hasBeenSeen();
+                        mapContents[mx][my].setChanged();
+                    }
+                    if (blocked) {
+//                        # We've scanning a row of blocked squares
+                        if (mapContents[mx][my].isWall()) {
+                            newStart = rSlope;
+                            continue;
+                        } else {
+                            blocked = false;
+                            lightStart = newStart;
+                        }
+                    } else {
+                        if (mapContents[mx][my].isWall() && (i < radius)) {
+//                            # This is a blocking square, start a child scan
+                            blocked = true;
+                            castLight(cx, cy, i + 1, lightStart, lSlope,
+                                radius, xx, xy, yx, yy, id + 1);
+                            newStart = rSlope;
+                        }
+                    }
+                }
+            } //# while dx <= 0
+
+            if (blocked) {
+                break;
             }
         }
     }
@@ -403,11 +486,12 @@ public class Workhorse {
         if (lookY > startY) {
             moveY = 1;
         }
-            return isLOSVisible(startX + moveX, startY + moveY, lookX, lookY);
+        return isLOSVisible(startX + moveX, startY + moveY, lookX, lookY);
     }
 
     private void checkVisibility() {
         int r = player.getViewRange();
+
         int x = currentLoc.x, y = currentLoc.y;
         MapObject map;
         int minx = Math.max(0, (x - r - 2));
@@ -437,6 +521,7 @@ public class Workhorse {
     private void initVisibility() {
         int r = player.getViewRange();
         MapObject map;
+
         int x = currentLoc.x, y = currentLoc.y;
         for (int k = 0; k < x; k++) {
             for (int i = 0; i < y; i++) {
@@ -454,6 +539,7 @@ public class Workhorse {
 
     private void cleanDisplay() {
         String beol = " XXX ";//end of line for TextBox
+
         BaseObject nowContents;
         MapObject map;
         for (int k = 0; k < mapSizeX; k++) {
@@ -479,25 +565,52 @@ public class Workhorse {
     private void displayMap() {
 
         String beol = " XXX ";//end of line for TextBox
+
         BaseObject nowContents;
         MapObject map;
 
         for (int k = 0; k < mapSizeX; k++) {
             for (int i = 0; i < mapSizeY; i++) {
                 map = mapContents[k][i];
-                if (map.hasBeenSeen()) {
-                    if (map.isChanged()) {
+//                if (map.hasBeenSeen()) {
+//                    if (map.isChanged()) {
                         if (map.isVisible()) {
                             nowContents = map.getTopObject();
                             mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
-                        } else {
-                            nowContents = map.getFlooring();
-                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
-                        }
-                    }
+//                        } else {
+//                            nowContents = map.getFlooring();
+//                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
+//                        }
+//                    }
                     map.setChanged(false);
                 } else {
                     mainInterface.print(k, i, ' ', CSIColor.BLACK);
+                }
+            }
+        }
+        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
+        infoBox.draw();
+        statsBox.setText(
+            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+        statsBox.draw();
+        mainInterface.refresh();
+//        displayLightMap();
+    }
+
+    private void displayLightMap() {
+        String beol = " XXX ";//end of line for TextBox
+
+        BaseObject nowContents;
+        MapObject map;
+
+        for (int k = 0; k < mapSizeX; k++) {
+            for (int i = 0; i < mapSizeY; i++) {
+                map = mapContents[k][i];
+                if (map.isVisible()) {
+                    mainInterface.print(k, i + infoSpace, '!', CSIColor.ALICE_BLUE, CSIColor.YELLOW);
+                } else {
+
+                    mainInterface.print(k, i + infoSpace, 'X', CSIColor.SAFETY_ORANGE, CSIColor.VERMILION);
                 }
             }
         }
@@ -547,6 +660,7 @@ public class Workhorse {
     }
 
     private void chaosMapping(Point start) { //this will recursively make a random cloud
+
         CSIColor tempColor;
         if (recurseNumber > maxRecurse) {
             return;
@@ -555,6 +669,7 @@ public class Workhorse {
         int i = start.x;
         int k = start.y;
         if (!((i > (mapSizeX - 1)) || (k > (mapSizeY - 1)) || (i < 0) || (k < 0))) { //make sure we're not over the edge of the map
+
             tempColor = checkColorList(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30)));
             mapContents[i][k].setFlooring(new FoldObject(tempColor));
         }
@@ -565,7 +680,9 @@ public class Workhorse {
     }
 
     private void creaturePlacement() {// this will place creatures randomly
+
         int r; //this will hold our random numbers
+
         MapObject tempObj;
         //let's fill in the rest randomly for now
         for (int i = 0; i < (mapSizeX); i++) {
@@ -573,6 +690,7 @@ public class Workhorse {
                 tempObj = mapContents[i][k];
                 if (tempObj.isFloor()) {
                     r = rng.nextInt(25); //about 1/25th of the tiles will have an enemy
+
                     if (r == 0) {
                         tempObj.setMonster(new QuarkObject(mapLevel));
                     }
@@ -599,6 +717,7 @@ public class Workhorse {
     private void floodFill(int x, int y) {
         if ((x < 0) || (x > (mapSizeX - 1)) || (y < 0) || (y > (mapSizeY - 1))) {
             return; //exits if coords are out of range for the map
+
         }
         if (mapContents[x][y].isVisible()) {
             return;
@@ -682,6 +801,18 @@ public class Workhorse {
 
     private void buildMap() {//this will build all of the elements of the map
 
+
+
+
+
+
+
+
+
+
+
+
+
         int blockX, blockY, x, y; //these will be our random numbers when we need them
 
         //initiates the mapContents
@@ -722,6 +853,7 @@ public class Workhorse {
         boolean stairsPlaced = false;
         do {
             x = rng.nextInt(mapSizeX);//these lines give us a random point in the  map
+
             y = rng.nextInt(mapSizeY);
             if (mapContents[x][y].isFloor()) {
                 mapContents[x][y].setFlooring(new StairsObject());
@@ -734,7 +866,8 @@ public class Workhorse {
         player.myName = askPlayer(1, "Please enter the particle's name. ");
         initVisibility();
         cleanDisplay();
-        checkVisibility();
+//        checkVisibility();
+        doFov(currentLoc.x, currentLoc.y, player.getViewRange());
         displayMap();
     }
 
