@@ -526,11 +526,11 @@ public class Workhorse {
         for (int k = 0; k < x; k++) {
             for (int i = 0; i < y; i++) {
                 map = mapContents[k][i];
-                if (Math.pow(k - x, 2) + Math.pow(i - y, 2) <= Math.pow(r, 2)) {
-                    map.setVisible(100);
-                } else {
-                    map.setVisible(0);
-                }
+//                if (Math.pow(k - x, 2) + Math.pow(i - y, 2) <= Math.pow(r, 2)) {
+//                    map.setVisible(100);
+//                } else {
+                map.setVisible(0);
+//                }
                 map.setChanged();
                 map.setHasBeenSeen(false);
             }
@@ -563,38 +563,38 @@ public class Workhorse {
     }
 
     private void displayMap() {
-
-        String beol = " XXX ";//end of line for TextBox
-
-        BaseObject nowContents;
-        MapObject map;
-
-        for (int k = 0; k < mapSizeX; k++) {
-            for (int i = 0; i < mapSizeY; i++) {
-                map = mapContents[k][i];
-//                if (map.hasBeenSeen()) {
-//                    if (map.isChanged()) {
-                        if (map.isVisible()) {
-                            nowContents = map.getTopObject();
-                            mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
-//                        } else {
-//                            nowContents = map.getFlooring();
-//                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
-//                        }
-//                    }
-                    map.setChanged(false);
-                } else {
-                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
-                }
-            }
-        }
-        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
-        infoBox.draw();
-        statsBox.setText(
-            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
-        statsBox.draw();
-        mainInterface.refresh();
-//        displayLightMap();
+//
+//        String beol = " XXX ";//end of line for TextBox
+//
+//        BaseObject nowContents;
+//        MapObject map;
+//
+//        for (int k = 0; k < mapSizeX; k++) {
+//            for (int i = 0; i < mapSizeY; i++) {
+//                map = mapContents[k][i];
+////                if (map.hasBeenSeen()) {
+////                    if (map.isChanged()) {
+//                        if (map.isVisible()) {
+//                            nowContents = map.getTopObject();
+//                            mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
+////                        } else {
+////                            nowContents = map.getFlooring();
+////                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
+////                        }
+////                    }
+//                    map.setChanged(false);
+//                } else {
+//                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
+//                }
+//            }
+//        }
+//        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
+//        infoBox.draw();
+//        statsBox.setText(
+//            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+//        statsBox.draw();
+//        mainInterface.refresh();
+        displayLightMap();
     }
 
     private void displayLightMap() {
@@ -800,19 +800,6 @@ public class Workhorse {
     }
 
     private void buildMap() {//this will build all of the elements of the map
-
-
-
-
-
-
-
-
-
-
-
-
-
         int blockX, blockY, x, y; //these will be our random numbers when we need them
 
         //initiates the mapContents
@@ -864,7 +851,6 @@ public class Workhorse {
 
     private void getPlayerName() {
         player.myName = askPlayer(1, "Please enter the particle's name. ");
-        initVisibility();
         cleanDisplay();
 //        checkVisibility();
         doFov(currentLoc.x, currentLoc.y, player.getViewRange());
