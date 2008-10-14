@@ -150,6 +150,18 @@ public class MapObject {
         return true;
     }
     
+    public void setVisible(boolean vis){
+        if (vis){
+            setVisible(100);
+        }else{
+            setVisible(0);
+        }
+    }
+    
+    public void setVisible(){
+        setVisible(100);
+    }
+    
     public void setVisible(double vis){
         flooring.visible = vis;
         if (hasMonster()){
