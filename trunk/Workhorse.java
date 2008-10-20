@@ -563,38 +563,38 @@ public class Workhorse {
     }
 
     private void displayMap() {
-//
-//        String beol = " XXX ";//end of line for TextBox
-//
-//        BaseObject nowContents;
-//        MapObject map;
-//
-//        for (int k = 0; k < mapSizeX; k++) {
-//            for (int i = 0; i < mapSizeY; i++) {
-//                map = mapContents[k][i];
-////                if (map.hasBeenSeen()) {
-////                    if (map.isChanged()) {
-//                        if (map.isVisible()) {
-//                            nowContents = map.getTopObject();
-//                            mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
-////                        } else {
-////                            nowContents = map.getFlooring();
-////                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
-////                        }
-////                    }
-//                    map.setChanged(false);
-//                } else {
-//                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
-//                }
-//            }
-//        }
-//        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
-//        infoBox.draw();
-//        statsBox.setText(
-//            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
-//        statsBox.draw();
-//        mainInterface.refresh();
-        displayLightMap();
+
+        String beol = " XXX ";//end of line for TextBox
+
+        BaseObject nowContents;
+        MapObject map;
+
+        for (int k = 0; k < mapSizeX; k++) {
+            for (int i = 0; i < mapSizeY; i++) {
+                map = mapContents[k][i];
+//                if (map.hasBeenSeen()) {
+//                    if (map.isChanged()) {
+                        if (map.isVisible()) {
+                            nowContents = map.getTopObject();
+                            mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
+//                        } else {
+//                            nowContents = map.getFlooring();
+//                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
+//                        }
+//                    }
+                    map.setChanged(false);
+                } else {
+                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
+                }
+            }
+        }
+        mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
+        infoBox.draw();
+        statsBox.setText(
+            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+        statsBox.draw();
+        mainInterface.refresh();
+//        displayLightMap();
     }
 
     private void displayLightMap() {
@@ -847,6 +847,12 @@ public class Workhorse {
                 stairsPlaced = true;
             }
         } while (!stairsPlaced);
+
+        for (int i = 0; i < (mapSizeX); i++) {
+            for (int k = 0; k < mapSizeY; k++) {
+                mapContents[i][k].setVisible(false);
+            }
+        }
     }
 
     private void getPlayerName() {
