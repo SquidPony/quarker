@@ -134,23 +134,23 @@ public class Workhorse {
                 y = currentLoc.y;
             boolean moved = false;
 
-            if (thisKey.isUpArrow()) {
+            if (thisKey.isUpArrow() || (thisKey.code == CharKey.k)) {
                 tryToMove(x, y - 1);
-            } else if (thisKey.isUpRightArrow()) {
+            } else if (thisKey.isUpRightArrow() || (thisKey.code == CharKey.u)) {
                 tryToMove(x + 1, y - 1);
-            } else if (thisKey.isRightArrow()) {
+            } else if (thisKey.isRightArrow() || (thisKey.code == CharKey.l)) {
                 tryToMove(x + 1, y);
-            } else if (thisKey.isDownRightArrow()) {
+            } else if (thisKey.isDownRightArrow() || (thisKey.code == CharKey.n)) {
                 tryToMove(x + 1, y + 1);
-            } else if (thisKey.isDownArrow()) {
+            } else if (thisKey.isDownArrow() || (thisKey.code == CharKey.j)) {
                 tryToMove(x, y + 1);
-            } else if (thisKey.isDownLeftArrow()) {
+            } else if (thisKey.isDownLeftArrow() || (thisKey.code == CharKey.b)) {
                 tryToMove(x - 1, y + 1);
-            } else if (thisKey.isLeftArrow()) {
+            } else if (thisKey.isLeftArrow() || (thisKey.code == CharKey.h)) {
                 tryToMove(x - 1, y);
-            } else if (thisKey.isUpLeftArrow()) {
+            } else if (thisKey.isUpLeftArrow() || (thisKey.code == CharKey.y)) {
                 tryToMove(x - 1, y - 1);
-            } else if (thisKey.isSelfArrow()) {
+            } else if (thisKey.isSelfArrow() || (thisKey.code == CharKey.DOT)) {
                 restTurn();
             }
 
@@ -179,10 +179,17 @@ public class Workhorse {
                 case CharKey.B:
                     buildNewLevel(true);
                     break;
+                case CharKey.QUESTION:
+                    showHelp();
+                    break;
             }
         }
     }
 
+    private void showHelp(){
+        
+    }
+    
     private void runMonsterTurn() {
         int x, y;
         for (int i = 0; i < mapSizeX; i++) {
@@ -349,7 +356,7 @@ public class Workhorse {
         if (newObj.isPassable()) {
             currentLoc.move(a, b);
 //            checkVisibility();
-            doFov(currentLoc.x, currentLoc.y, player.getViewRange());
+//            doFov(currentLoc.x, currentLoc.y, player.getViewRange());
         } else {
             if (newObj.hasMonster()) {
                 if (doFight(newObj.getMonster())) {
@@ -574,7 +581,7 @@ public class Workhorse {
                 map = mapContents[k][i];
 //                if (map.hasBeenSeen()) {
 //                    if (map.isChanged()) {
-                        if (map.isVisible()) {
+//                        if (map.isVisible()) {
                             nowContents = map.getTopObject();
                             mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
 //                        } else {
@@ -583,9 +590,9 @@ public class Workhorse {
 //                        }
 //                    }
                     map.setChanged(false);
-                } else {
-                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
-                }
+//                } else {
+//                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
+//                }
             }
         }
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
@@ -859,7 +866,7 @@ public class Workhorse {
         player.myName = askPlayer(1, "Please enter the particle's name. ");
         cleanDisplay();
 //        checkVisibility();
-        doFov(currentLoc.x, currentLoc.y, player.getViewRange());
+//        doFov(currentLoc.x, currentLoc.y, player.getViewRange());
         displayMap();
     }
 
