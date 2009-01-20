@@ -23,4 +23,8 @@ public class FoldObject extends WallObject {
     public FoldObject(CSIColor myColor) {
         super("spacetime fold", '#', false, myColor);
     }
+
+    public void deepCopy(FoldObject obj){
+        deepCopy((WallObject)obj);
+    }
 }

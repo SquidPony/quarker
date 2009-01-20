@@ -4,31 +4,54 @@
  */
 package my.quarker;
 
-import java.io.*;
 import net.slashie.libjcsi.CSIColor;
 
 /**
  *
  * @author ehoward
  */
-public class PlayerObject extends BaseObject {
-    private int mass = 30;
+public class PlayerObject extends MonsterObject {
     private int maxHp = 40;
     private int size = 1;
-    private int level = 1;
     private int nextSize = 8;
     private int viewRange = 5;
 
     public PlayerObject() {
-        super("Player", '@', true, CSIColor.WHITE);
+        myName = "Player";
+        represent = '@';
+        passable = true;
+        frontColor = CSIColor.WHITE;
     }
 
-    public int getMass() {
-        return mass;
+    public void initialize(){
+        setMass(maxHp);
+        setLevel(1);
+        setDamage(5);
+        setAim(5);
+        setAgility(5);
+        setPenetration(5);
+        setToughness(5);
+        setAttackPower(5);
+        setDeflection(5);
     }
 
-    public void setMass(int mass) {
-        this.mass = mass;
+    public void levelUp(){
+        maxHp +=10;
+        damage +=2;
+        aim +=3;
+        agility +=3;
+        penetration +=2;
+        toughness+=2;
+        attackPower+=3;
+        deflection+=2;
+    }
+
+    public void deepCopy(PlayerObject obj){
+        deepCopy((MonsterObject)obj);
+        maxHp = obj.maxHp;
+        size = obj.size;
+        nextSize = obj.nextSize;
+        viewRange = obj.viewRange;
     }
 
     public int getMaxHp() {
@@ -45,14 +68,6 @@ public class PlayerObject extends BaseObject {
 
     public void setSize(int size) {
         this.size = size;
-    }
-
-    public int getLevel() {
-        return level;
-    }
-
-    public void setLevel(int level) {
-        this.level = level;
     }
 
     public int getNextSize() {

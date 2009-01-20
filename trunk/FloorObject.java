@@ -27,6 +27,10 @@ public class FloorObject extends TerrainObject{
         super(name, represent, passable, color);
     }
 
+    public void deepCopy(FloorObject obj){
+        deepCopy((TerrainObject)obj);
+    }
+
     @Override
     public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
         String ret = "";
