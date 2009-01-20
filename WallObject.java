@@ -4,7 +4,6 @@
  */
 package my.quarker;
 
-import java.io.*;
 import net.slashie.libjcsi.CSIColor;
 
 /**
@@ -23,5 +22,9 @@ public class WallObject extends TerrainObject {
 
     public WallObject(CSIColor myColor) {
         super("wall", '#', false, myColor);
+    }
+
+    public void deepCopy(WallObject obj){
+        deepCopy((TerrainObject)obj);
     }
 }

@@ -11,17 +11,16 @@ import net.slashie.libjcsi.*;
  *
  * @author Eben
  */
-public class BaseObject {
+public class BaseObject implements Cloneable{
 
-    String myName;
-    char represent;
-    boolean passable;
-    CSIColor frontColor;
-    CSIColor backColor;
-    double visible = 0;
-    static final CSIColor DEFAULT_FRONT_COLOR = CSIColor.WHITE,  DEFAULT_BACK_COLOR = CSIColor.BLACK;
-    int sizeUsed;
-    static final int MINIMUM = 1, SMALL = 25, MEDIUM = 50, LARGE = 75, MAXIMUM = 100; //guidlines for object size in spaces
+    protected String myName;
+    protected char represent;
+    protected boolean passable;
+    protected CSIColor frontColor, backColor;
+    protected double visible = 0;
+    protected static final CSIColor DEFAULT_FRONT_COLOR = CSIColor.WHITE,  DEFAULT_BACK_COLOR = CSIColor.BLACK;
+    protected int sizeUsed;
+    protected static final int MINIMUM = 1, SMALL = 25, MEDIUM = 50, LARGE = 75, MAXIMUM = 100; //guidlines for object size in spaces
 
     public BaseObject() { //default is creating a basic wall
         this("unknown", '?', false, DEFAULT_FRONT_COLOR);
@@ -44,6 +43,14 @@ public class BaseObject {
         sizeUsed = MEDIUM;
     }
 
+    public void deepCopy(BaseObject obj){
+        this.myName = obj.myName;
+        this.represent = obj.represent;
+        this.passable = obj.passable;
+        this.frontColor = obj.frontColor;
+        this.backColor = obj.backColor;
+        this.sizeUsed = obj.sizeUsed;
+    }
     /*
      *This should be overridden by inheriting classes in order to provide additional output 
      * to the save file
@@ -144,6 +151,30 @@ public class BaseObject {
     
     public Double getVisible(){
         return visible;
+    }
+
+    public String getMyName() {
+        return myName;
+    }
+
+    public void setMyName(String myName) {
+        this.myName = myName;
+    }
+
+    public char getRepresent() {
+        return represent;
+    }
+
+    public void setRepresent(char represent) {
+        this.represent = represent;
+    }
+
+    public int getSizeUsed() {
+        return sizeUsed;
+    }
+
+    public void setSizeUsed(int sizeUsed) {
+        this.sizeUsed = sizeUsed;
     }
 
     public boolean equals(BaseObject obj) {

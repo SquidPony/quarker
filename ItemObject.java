@@ -8,11 +8,16 @@ import net.slashie.libjcsi.CSIColor;
  */
 public class ItemObject extends BaseObject {
 
-    private int quantity;
+    int quantity;
 
     public ItemObject() {
         super("Item", '*', true, CSIColor.VEGAS_GOLD);
         quantity = 1;
+    }
+    
+    public ItemObject(String name, char rep, boolean pass, CSIColor color, int quant){
+        super(name, rep, pass, color);
+        quantity = quant;
     }
 
     public void setQuantity(int num) {
@@ -21,6 +26,11 @@ public class ItemObject extends BaseObject {
         } else {
             quantity = 0;
         }
+    }
+
+    public void deepCopy(ItemObject obj){
+        deepCopy((BaseObject)obj);
+        quantity = obj.quantity;
     }
 
     public int getQuantity() {

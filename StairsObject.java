@@ -21,4 +21,9 @@ public class StairsObject extends TerrainObject {
             down = false;
         }
     }
+
+    public void deepCopy(StairsObject obj){
+        deepCopy((TerrainObject)obj);
+        down = obj.down;
+    }
 }

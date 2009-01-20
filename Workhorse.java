@@ -1,17 +1,16 @@
 package my.quarker;
 
 import java.awt.Point;
-import java.io.*;
 import java.util.ArrayList;
 import java.util.Random;
 import net.slashie.libjcsi.*;
 import net.slashie.libjcsi.textcomponents.*;
 import net.slashie.libjcsi.wswing.*;
-import net.slashie.util.FileUtil;
 
 public class Workhorse {
     //-------------------Custom variables-------------------//
-    private String versionNumber = "0.05";
+
+    private String versionNumber = "0.06";
     private WSwingConsoleInterface mainInterface;
     private TextInformBox infoBox;
     private int infoSpace = 2; //this is the height of the infoBox
@@ -32,12 +31,11 @@ public class Workhorse {
         {1, 0, 0, -1, -1, 0, 0, 1},
         {0, 1, -1, 0, 0, -1, 1, 0},
         {0, 1, 1, 0, 0, -1, -1, 0},
-        {1, 0, 0, 1, -1, 0, 0, -1},
-    };
+        {1, 0, 0, 1, -1, 0, 0, -1},};
 
     public Workhorse() {
         try {
-            mainInterface = new WSwingConsoleInterface("Quarker", true);
+            mainInterface = new WSwingConsoleInterface("Quarker");
         } catch (ExceptionInInitializerError eiie) {
             System.out.println("Fatal Error Initializing Swing Console Box");
             eiie.printStackTrace();
@@ -45,7 +43,7 @@ public class Workhorse {
         }
         initEverything();
         mainInterface.refresh();
-        getPlayerName();
+        initializePlayer();
         playerTurn();
     }
 
@@ -127,76 +125,69 @@ public class Workhorse {
 
     private void takeAction(CharKey thisKey) {  // this will feed control to the appropriate method based on player input
 
-        if (thisKey.isArrow()) {
+//        tellPlayer(thisKey.toString());//for debugging purposes
 
-            int r = player.getViewRange(),
-                x = currentLoc.x,
+        int x = currentLoc.x,
                 y = currentLoc.y;
-            boolean moved = false;
 
-            if (thisKey.isUpArrow() || (thisKey.code == CharKey.k)) {
-                tryToMove(x, y - 1);
-            } else if (thisKey.isUpRightArrow() || (thisKey.code == CharKey.u)) {
-                tryToMove(x + 1, y - 1);
-            } else if (thisKey.isRightArrow() || (thisKey.code == CharKey.l)) {
-                tryToMove(x + 1, y);
-            } else if (thisKey.isDownRightArrow() || (thisKey.code == CharKey.n)) {
-                tryToMove(x + 1, y + 1);
-            } else if (thisKey.isDownArrow() || (thisKey.code == CharKey.j)) {
-                tryToMove(x, y + 1);
-            } else if (thisKey.isDownLeftArrow() || (thisKey.code == CharKey.b)) {
-                tryToMove(x - 1, y + 1);
-            } else if (thisKey.isLeftArrow() || (thisKey.code == CharKey.h)) {
-                tryToMove(x - 1, y);
-            } else if (thisKey.isUpLeftArrow() || (thisKey.code == CharKey.y)) {
-                tryToMove(x - 1, y - 1);
-            } else if (thisKey.isSelfArrow() || (thisKey.code == CharKey.DOT)) {
-                restTurn();
-            }
+        if (thisKey.isUpArrow() || (thisKey.code == CharKey.k)) {
+            tryToMove(x, y - 1);
+        } else if (thisKey.isUpRightArrow() || (thisKey.code == CharKey.u)) {
+            tryToMove(x + 1, y - 1);
+        } else if (thisKey.isRightArrow() || (thisKey.code == CharKey.l)) {
+            tryToMove(x + 1, y);
+        } else if (thisKey.isDownRightArrow() || (thisKey.code == CharKey.n)) {
+            tryToMove(x + 1, y + 1);
+        } else if (thisKey.isDownArrow() || (thisKey.code == CharKey.j)) {
+            tryToMove(x, y + 1);
+        } else if (thisKey.isDownLeftArrow() || (thisKey.code == CharKey.b)) {
+            tryToMove(x - 1, y + 1);
+        } else if (thisKey.isLeftArrow() || (thisKey.code == CharKey.h)) {
+            tryToMove(x - 1, y);
+        } else if (thisKey.isUpLeftArrow() || (thisKey.code == CharKey.y)) {
+            tryToMove(x - 1, y - 1);
+        } else if (thisKey.isSelfArrow() || (thisKey.code == CharKey.DOT)) {
+            restTurn();
+        }
 
-
-
-        } else {
-            switch (thisKey.code) {
-                case CharKey.ESC:
-                    leaving();
-                    break;
-                case CharKey.MORETHAN:
-                    tryToGoDownStairs();
-                    break;
-                case CharKey.LESSTHAN:
-                    tryToGoUpStairs();
-                    break;
-                case CharKey.S:
-                    saveGame();
-                    break;
-                case CharKey.R:
-                    loadGame();
-                    break;
-                case CharKey.L:
-                    lookAround();
-                    break;
-                case CharKey.B:
-                    buildNewLevel(true);
-                    break;
-                case CharKey.QUESTION:
-                    showHelp();
-                    break;
-            }
+        switch (thisKey.code) {
+            case CharKey.ESC:
+                leaving();
+                break;
+            case CharKey.MORETHAN:
+                tryToGoDownStairs();
+                break;
+            case CharKey.LESSTHAN:
+                tryToGoUpStairs();
+                break;
+            case CharKey.S:
+                saveGame();
+                break;
+            case CharKey.R:
+                loadGame();
+                break;
+            case CharKey.L:
+                lookAround();
+                break;
+            case CharKey.B:
+                buildNewLevel(true);
+                break;
+            case CharKey.QUESTION:
+                showHelp();
+                break;
         }
     }
 
-    private void showHelp(){
-        
+    private void showHelp() {
     }
-    
+
     private void runMonsterTurn() {
         int x, y;
         for (int i = 0; i < mapSizeX; i++) {
             for (int k = 0; k < mapSizeY; k++) {
                 if ((mapContents[i][k].hasMonster())) {
                     MonsterObject monObj = mapContents[i][k].getMonster();
-                    if (monObj.getWakeful()) {
+                    if (monObj.isAwake()) {
                         x = 0;
                         y = 0;
                         if (i > (currentLoc.x + 1)) {
@@ -230,11 +221,24 @@ public class Workhorse {
 
     private void monsterAttacks(int a, int b) {
         MonsterObject monster = mapContents[a][b].getMonster();
-        int attack;
-        attack = monster.getAttack();
-        if ((attack + rng.nextInt(10)) > (player.getLevel() * 3 + rng.nextInt(30))) {
-            player.setMass(player.getMass() - monster.getDamage());
-            tellPlayer("The " + monster.getName() + " reduced your mass by " + String.valueOf(monster.getDamage()) + " electrovolts!");
+        double hitChance;
+
+        /* check to see if monster hits*/
+        hitChance = monster.getAim() + monster.getLevel() - player.getAgility();
+        hitChance *= 150;
+        hitChance /= monster.getAim();
+        hitChance = Math.max(1, hitChance); // there is always a 1% chance for the monster to hit
+        if (hitChance > rng.nextInt(100)) {// a hit!
+            int currentDamage = monster.getDamage();
+            if (monster.getPenetration() > player.getDeflection()) {
+                currentDamage += monster.getPenetration() - player.getDeflection();
+            }
+            currentDamage -= player.getToughness();
+            if (currentDamage < 0) {
+                currentDamage = 0;
+            }
+            player.applyDamage(currentDamage);
+            tellPlayer("The " + monster.getName() + " reduced your mass by " + String.valueOf(currentDamage) + " electrovolts!");
         } else {
             tellPlayer("The " + monster.getName() + " missed you.");
         }
@@ -242,7 +246,7 @@ public class Workhorse {
 
     private void levelUp() {
         player.setNextSize((int) quarkLevels.levels.removeFirst());
-        player.setLevel(player.getLevel() + 1);
+        player.levelUp();
         tellPlayer("You have grown larger!");
     }
 
@@ -371,36 +375,35 @@ public class Workhorse {
 
     public boolean doFight(MonsterObject monster) {
 
-
-        int r, i;
-
-        r = rng.nextInt(100);
-        r = r + player.getLevel() * 5 - monster.getDefense();
-
         monster.wakeUp(); //attacking will cause the monster to wake up, even if not hit
-
-        if (r < 50) {
-            //miss
-            tellPlayer("You missed the " + monster.getName());
-            return false;
-        } else {
-            i = rng.nextInt(player.getLevel() * 4);
-            if (i <= 0) {
-                tellPlayer("You hit the " + monster.getName() + ", but didn't effect it!");
-            } else {
-                tellPlayer("You hit the " + monster.getName() + " causing it to lose " + i + " electronvolts of mass.");
-                monster.applyDamage(i);
+    /* check to see if player hits */
+        double hitChance;
+        hitChance = player.getAim() + player.getLevel() - monster.getAgility();
+        hitChance *= 150;
+        hitChance /= player.getAim();
+        hitChance = Math.max(5, hitChance); // there is always a 5% chance for the player to hit
+        if (hitChance > rng.nextInt(100)) {// a hit!
+            int currentDamage = player.getDamage();
+            if (player.getPenetration() > monster.getDeflection()) {
+                currentDamage += player.getPenetration() - monster.getDeflection();
             }
-
-            if (monster.getHp() < 0) {//swallow!
-
+            currentDamage -= monster.getToughness();
+            if (currentDamage < 1) {
+                currentDamage = 1;
+            }
+            tellPlayer("You hit the " + monster.getName() + " causing it to lose " + currentDamage + " electronvolts of mass.");
+            monster.applyDamage(currentDamage);
+            if (monster.getMass() < 0) {//swallow!
                 tellPlayer("You absorbed the " + monster.getName() + "!");
                 player.setSize(player.getSize() + monster.getSatiation());
                 return true;
-            } else {
-                return false;
             }
+         else {
+            return false;
+         }
         }
+        tellPlayer("You missed the " + monster.getName() + ".");
+        return false;
     }
 
     private void doFov(int startX, int startY, int radius) {
@@ -408,8 +411,8 @@ public class Workhorse {
         mapContents[startX][startY].setVisible(100);
         for (int i = 0; i < 8; i++) {
             castLight(startX, startY, 1, 1.0, 0.0, radius,
-                FOV_MULTIPLIER[0][i], FOV_MULTIPLIER[1][i],
-                FOV_MULTIPLIER[2][i], FOV_MULTIPLIER[3][i], 0);
+                    FOV_MULTIPLIER[0][i], FOV_MULTIPLIER[1][i],
+                    FOV_MULTIPLIER[2][i], FOV_MULTIPLIER[3][i], 0);
         }
 //        castLight(startX, startY, 1, 1.0, 0.0, radius,
 //            1, 0, 0, 1, 0); //testing
@@ -460,7 +463,7 @@ public class Workhorse {
 //                            # This is a blocking square, start a child scan
                             blocked = true;
                             castLight(cx, cy, i + 1, lightStart, lSlope,
-                                radius, xx, xy, yx, yy, id + 1);
+                                    radius, xx, xy, yx, yy, id + 1);
                             newStart = rSlope;
                         }
                     }
@@ -582,14 +585,14 @@ public class Workhorse {
 //                if (map.hasBeenSeen()) {
 //                    if (map.isChanged()) {
 //                        if (map.isVisible()) {
-                            nowContents = map.getTopObject();
-                            mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
+                nowContents = map.getTopObject();
+                mainInterface.print(k, i + infoSpace, nowContents.represent, nowContents.frontColor, nowContents.backColor);
 //                        } else {
 //                            nowContents = map.getFlooring();
 //                            mainInterface.print(k, i + infoSpace, nowContents.represent, faded(nowContents.frontColor), nowContents.backColor);
 //                        }
 //                    }
-                    map.setChanged(false);
+                map.setChanged(false);
 //                } else {
 //                    mainInterface.print(k, i, ' ', CSIColor.BLACK);
 //                }
@@ -598,7 +601,7 @@ public class Workhorse {
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
         infoBox.draw();
         statsBox.setText(
-            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+                beol + "Mass: " + beol + player.getMass() + beol + beol + "Level: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
         statsBox.draw();
         mainInterface.refresh();
 //        displayLightMap();
@@ -624,7 +627,7 @@ public class Workhorse {
         mainInterface.print(currentLoc.x, currentLoc.y + infoSpace, player.represent, player.frontColor);
         infoBox.draw();
         statsBox.setText(
-            beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
+                beol + "Mass: " + beol + player.getMass() + beol + beol + "Size: " + beol + player.getLevel() + beol + beol + "Xp: " + beol + player.getSize() + beol + beol + "Spacetime: " + beol + mapLevel + beol);
         statsBox.draw();
         mainInterface.refresh();
     }
@@ -862,8 +865,9 @@ public class Workhorse {
         }
     }
 
-    private void getPlayerName() {
+    private void initializePlayer() {
         player.myName = askPlayer(1, "Please enter the particle's name. ");
+        player.initialize();
         cleanDisplay();
 //        checkVisibility();
 //        doFov(currentLoc.x, currentLoc.y, player.getViewRange());

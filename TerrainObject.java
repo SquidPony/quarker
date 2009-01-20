@@ -27,6 +27,11 @@ public class TerrainObject extends BaseObject {
         super(name, represent, passable, color);
     }
 
+    public void deepCopy(TerrainObject obj){
+        deepCopy((BaseObject)obj);
+        everSeen = obj.everSeen;
+    }
+
     public boolean isEverSeen() {
         return everSeen;
     }
