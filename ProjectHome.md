@@ -1,0 +1,1 @@
+Quarker is an attempt to build the basics of a roguelike in a non-fantasy setting with Java.  It should be considered a learning tool and not a polished game.
