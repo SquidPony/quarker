@@ -16,6 +16,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import net.slashie.libjcsi.CSIColor;
 import net.slashie.libjcsi.CharKey;
 
@@ -28,6 +30,10 @@ public class WSwingConsoleInterface {
     private final JTextField inputField;
     private final BlockingQueue<CharKey> keyQueue = new LinkedBlockingQueue<CharKey>();
     private volatile String lineInput = "";
+
+    private int inputStartX = 0;
+    private int inputStartY = 0;
+    private int lastEchoedLength = 0;
 
     private char[][] chars;
     private CSIColor[][] fronts;
@@ -71,6 +77,40 @@ public class WSwingConsoleInterface {
                     lineInput = in.getText();
                     in.setText("");
                     keyQueue.offer(new CharKey(CharKey.ENTER));
+                });
+                in.addKeyListener(new KeyAdapter() {
+                    @Override
+                    public void keyPressed(KeyEvent e) {
+                        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+                            return;
+                        }
+                        if (isGameKey(e.getKeyCode())) {
+                            e.consume();
+                            keyQueue.offer(toCharKey(e));
+                        }
+                    }
+
+                    private boolean isGameKey(int keyCode) {
+                        switch (keyCode) {
+                            case KeyEvent.VK_ESCAPE:
+                            case KeyEvent.VK_UP:
+                            case KeyEvent.VK_DOWN:
+                            case KeyEvent.VK_LEFT:
+                            case KeyEvent.VK_RIGHT:
+                            case KeyEvent.VK_NUMPAD1:
+                            case KeyEvent.VK_NUMPAD2:
+                            case KeyEvent.VK_NUMPAD3:
+                            case KeyEvent.VK_NUMPAD4:
+                            case KeyEvent.VK_NUMPAD5:
+                            case KeyEvent.VK_NUMPAD6:
+                            case KeyEvent.VK_NUMPAD7:
+                            case KeyEvent.VK_NUMPAD8:
+                            case KeyEvent.VK_NUMPAD9:
+                                return true;
+                            default:
+                                return false;
+                        }
+                    }
                 });
 
                 p.addKeyListener(new KeyAdapter() {
@@ -125,11 +165,14 @@ public class WSwingConsoleInterface {
         chars = deepCopyChars(savedChars);
         fronts = deepCopyColors(savedFronts);
         backs = deepCopyColors(savedBacks);
+        runOnEdt(() -> panel.requestFocusInWindow());
     }
 
     public void locateCaret(int x, int y) {
         caretX = Math.max(0, Math.min(xdim - 1, x));
         caretY = Math.max(0, Math.min(ydim - 1, y));
+        inputStartX = caretX;
+        inputStartY = caretY;
         runOnEdt(() -> inputField.requestFocusInWindow());
     }
 
@@ -143,11 +186,64 @@ public class WSwingConsoleInterface {
     }
 
     public String input() {
-        while (true) {
-            CharKey key = inkey();
-            if (key.code == CharKey.ENTER) {
-                return lineInput == null ? "" : lineInput;
+        runOnEdtAndWait(() -> {
+            inputField.setText("");
+            inputField.requestFocusInWindow();
+            inputStartX = caretX;
+            inputStartY = caretY;
+            lastEchoedLength = 0;
+        });
+
+        DocumentListener docListener = new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                echoInputToConsole();
             }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                echoInputToConsole();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                echoInputToConsole();
+            }
+
+            private void echoInputToConsole() {
+                runOnEdt(() -> {
+                    String currentText = inputField.getText();
+                    int currentLength = currentText.length();
+
+                    // Clear old text by printing spaces where the old text was
+                    for (int i = 0; i < lastEchoedLength; i++) {
+                        print(inputStartX + i, inputStartY, ' ', CSIColor.WHITE, CSIColor.BLACK);
+                    }
+
+                    // Print new text
+                    for (int i = 0; i < currentLength; i++) {
+                        print(inputStartX + i, inputStartY, currentText.charAt(i), CSIColor.WHITE, CSIColor.BLACK);
+                    }
+
+                    lastEchoedLength = currentLength;
+                    refresh();
+                });
+            }
+        };
+
+        inputField.getDocument().addDocumentListener(docListener);
+
+        try {
+            while (true) {
+                CharKey key = inkey();
+                if (key.code == CharKey.ENTER) {
+                    String result = lineInput == null ? "" : lineInput;
+                    lineInput = "";
+                    return result;
+                }
+            }
+        } finally {
+            inputField.getDocument().removeDocumentListener(docListener);
         }
     }
 
