@@ -302,7 +302,7 @@ public class WSwingConsoleInterface {
                     throw new IOException("No PNG image writer available");
                 }
 
-                outputPath[0] = outputFile.getPath();
+                outputPath[0] = outputFile.getAbsolutePath();
             } catch (IOException e) {
                 failure[0] = new RuntimeException("Unable to save screenshot", e);
             }
@@ -346,6 +346,34 @@ public class WSwingConsoleInterface {
                 return new CharKey(CharKey.ESC);
             case KeyEvent.VK_ENTER:
                 return new CharKey(CharKey.ENTER);
+            case KeyEvent.VK_P:
+                return new CharKey(CharKey.P);
+            case KeyEvent.VK_S:
+                return new CharKey(CharKey.S);
+            case KeyEvent.VK_R:
+                return new CharKey(CharKey.R);
+            case KeyEvent.VK_L:
+                return new CharKey(CharKey.L);
+            case KeyEvent.VK_B:
+                return new CharKey(CharKey.B);
+            case KeyEvent.VK_H:
+                return new CharKey(CharKey.h);
+            case KeyEvent.VK_J:
+                return new CharKey(CharKey.j);
+            case KeyEvent.VK_K:
+                return new CharKey(CharKey.k);
+            case KeyEvent.VK_Y:
+                return new CharKey(CharKey.y);
+            case KeyEvent.VK_U:
+                return new CharKey(CharKey.u);
+            case KeyEvent.VK_N:
+                return new CharKey(CharKey.n);
+            case KeyEvent.VK_PERIOD:
+                return new CharKey(e.isShiftDown() ? CharKey.MORETHAN : CharKey.DOT);
+            case KeyEvent.VK_COMMA:
+                return new CharKey(e.isShiftDown() ? CharKey.LESSTHAN : ',');
+            case KeyEvent.VK_SLASH:
+                return new CharKey(e.isShiftDown() ? CharKey.QUESTION : '/');
             case KeyEvent.VK_UP:
                 return new CharKey(CharKey.ARROW_UP);
             case KeyEvent.VK_RIGHT:
