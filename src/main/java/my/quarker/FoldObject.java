@@ -1,15 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package my.quarker;
 
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author ehoward
- */
 public class FoldObject extends WallObject {
 
     public FoldObject(String name, char represent, boolean passable, CSIColor myColor) {

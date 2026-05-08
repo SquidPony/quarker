@@ -1,16 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package my.quarker;
 
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author ehoward
- */
 public class FloorObject extends TerrainObject{
     
     
@@ -32,7 +22,7 @@ public class FloorObject extends TerrainObject{
     }
 
     @Override
-    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
+    public String outputObjectToFile() {
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = "FloorObject" + eol + myName + eol + String.valueOf(represent) + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;

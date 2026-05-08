@@ -3,11 +3,6 @@ package my.quarker;
 import java.util.Random;
 import java.util.Vector;
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author ehoward
- */
 public class QuarkObject extends MonsterObject {
 
     private static final int RED = 0,  GREEN = 1,  BLUE = 2,  ANTIRED = 3,  ANTIGREEN = 4,  ANTIBLUE = 5;

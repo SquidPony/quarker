@@ -4,14 +4,9 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-
-/**
- *
- * @author ehoward
- */
 public class MapObject {
 
-    private TerrainObject flooring; //should be either a wall or floor or stairs
+    private TerrainObject flooring;
     private MonsterObject monster;
     private ArrayList<ItemObject> items;
     private Boolean changed = true;
@@ -213,13 +208,13 @@ public class MapObject {
         }
 
         flooring.inputObjectFromFile(reader);
-        reader.readLine(); //gets rid of readability space between entries
+        reader.readLine();
         currentType = reader.readLine();
         
         if (currentType.equals("MonsterObject")) {
             monster = new MonsterObject();
             monster.inputObjectFromFile(reader);
-            reader.readLine(); //gets rid of readability space between entries
+            reader.readLine();
             currentType = reader.readLine();
         }
 
@@ -230,7 +225,7 @@ public class MapObject {
                 tempItem = new ItemObject();
                 tempItem.inputObjectFromFile(reader);
                 items.add(tempItem);
-                reader.readLine(); //gets rid of readability space between entries
+                reader.readLine();
                 currentType = reader.readLine();
             } while (currentType.equals("ItemObject"));
         }

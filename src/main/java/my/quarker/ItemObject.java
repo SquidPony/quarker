@@ -1,11 +1,6 @@
 package my.quarker;
 
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author ehoward
- */
 public class ItemObject extends BaseObject {
 
     int quantity;

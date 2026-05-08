@@ -1,14 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
-
 package my.quarker;
-
-/**
- *
- * @author ehoward
- */
 public class FeelingsObject {
     private AttitudeEnum feelingStatus;
     private BaseObject feelingTowards;

@@ -1,24 +1,15 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package my.quarker;
 
 import java.util.Vector;
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author Eben
- */
 public class MonsterObject extends BaseObject {
 
-    protected int mass, //current health of the monster
-             damage, //amount of base damage the monster will do
-             aim,  agility,  level,  penetration,  toughness,  attackPower,  deflection,  satiation, //how full player will get from absorbing the monster
-             x,  y; //current x,y coordinates for the monster
+    protected int mass,
+             damage,
+             aim,  agility,  level,  penetration,  toughness,  attackPower,  deflection,  satiation,
+             x,  y;
     protected Vector<FeelingsObject> feelings = null;
-    protected boolean awake = false; //will tell us if the monster is active, default is not active
+    protected boolean awake = false;
 
     MonsterObject() {
         super();
