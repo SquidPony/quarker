@@ -159,6 +159,9 @@ public class Workhorse {
             case CharKey.S:
                 saveGame();
                 break;
+            case CharKey.P:
+                takeScreenshot();
+                break;
             case CharKey.R:
                 loadGame();
                 break;
@@ -830,6 +833,15 @@ public class Workhorse {
 
     private void saveGame() {
         tellPlayer("Saving is currently disabled.");
+    }
+
+    private void takeScreenshot() {
+        try {
+            String path = mainInterface.saveScreenshot("screenshots");
+            tellPlayer("Screenshot saved: " + path);
+        } catch (RuntimeException e) {
+            tellPlayer("Screenshot failed: " + e.getMessage());
+        }
     }
 
     private void loadGame() {

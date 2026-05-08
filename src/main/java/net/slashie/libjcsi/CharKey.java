@@ -8,6 +8,7 @@ public class CharKey {
     public static final int LESSTHAN = '<';
     public static final int QUESTION = '?';
     public static final int S = 's';
+    public static final int P = 'p';
     public static final int R = 'r';
     public static final int L = 'l';
     public static final int B = 'b';

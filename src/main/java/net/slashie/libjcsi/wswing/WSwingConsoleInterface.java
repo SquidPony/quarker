@@ -6,13 +6,19 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -269,6 +275,43 @@ public class WSwingConsoleInterface {
         chars[x][y] = ch;
         fronts[x][y] = front == null ? CSIColor.WHITE : front;
         backs[x][y] = back == null ? CSIColor.BLACK : back;
+    }
+
+    public String saveScreenshot(String directoryName) {
+        final String[] outputPath = new String[1];
+        final RuntimeException[] failure = new RuntimeException[1];
+
+        runOnEdtAndWait(() -> {
+            try {
+                File directory = new File(directoryName);
+                if (!directory.exists() && !directory.mkdirs()) {
+                    throw new IOException("Unable to create screenshot directory: " + directory.getPath());
+                }
+
+                String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
+                File outputFile = new File(directory, "quarker-" + timestamp + ".png");
+
+                int width = Math.max(1, panel.getWidth());
+                int height = Math.max(1, panel.getHeight());
+                BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D graphics = image.createGraphics();
+                panel.paint(graphics);
+                graphics.dispose();
+
+                if (!ImageIO.write(image, "png", outputFile)) {
+                    throw new IOException("No PNG image writer available");
+                }
+
+                outputPath[0] = outputFile.getPath();
+            } catch (IOException e) {
+                failure[0] = new RuntimeException("Unable to save screenshot", e);
+            }
+        });
+
+        if (failure[0] != null) {
+            throw failure[0];
+        }
+        return outputPath[0];
     }
 
     private static void clearArrays(char[][] c, CSIColor[][] f, CSIColor[][] b) {
