@@ -25,6 +25,7 @@ public class Workhorse {
     private XpLevels quarkLevels = new XpLevels();
     private PlayerObject player = new PlayerObject();
     private ArrayList<CSIColor> colorList = new ArrayList<CSIColor>();
+    private boolean recordingActive = false;
     private String eol = System.getProperty("line.separator");
     static final private int[][] FOV_MULTIPLIER = {
         {1, 0, 0, -1, -1, 0, 0, 1},
@@ -115,6 +116,14 @@ public class Workhorse {
         displayMap();
 
         mainInterface.refresh();
+        if (recordingActive) {
+            try {
+                mainInterface.captureRecordingFrame();
+            } catch (RuntimeException e) {
+                recordingActive = false;
+                tellPlayer("Recording stopped due to error: " + e.getMessage());
+            }
+        }
     }
 
     private void restTurn() {
@@ -162,6 +171,9 @@ public class Workhorse {
             case CharKey.P:
                 takeScreenshot();
                 break;
+            case CharKey.CAPITAL_P:
+                takeScreenshotSilent();
+                break;
             case CharKey.R:
                 loadGame();
                 break;
@@ -170,6 +182,9 @@ public class Workhorse {
                 break;
             case CharKey.B:
                 buildNewLevel(true);
+                break;
+            case CharKey.CAPITAL_V:
+                toggleRecording();
                 break;
             case CharKey.QUESTION:
                 showHelp();
@@ -841,6 +856,40 @@ public class Workhorse {
             tellPlayer("Screenshot saved: " + path);
         } catch (RuntimeException e) {
             tellPlayer("Screenshot failed: " + e.getMessage());
+        }
+    }
+
+    private void takeScreenshotSilent() {
+        try {
+            mainInterface.saveScreenshot("screenshots");
+        } catch (RuntimeException e) {
+            // Silent command by design.
+        }
+    }
+
+    private void toggleRecording() {
+        if (!recordingActive) {
+            try {
+                String path = mainInterface.startRecording("screenshots");
+                recordingActive = true;
+                tellPlayer("Recording started: " + path);
+            } catch (RuntimeException e) {
+                tellPlayer("Unable to start recording: " + e.getMessage());
+            }
+            return;
+        }
+
+        try {
+            String gifPath = mainInterface.stopRecording("screenshots");
+            recordingActive = false;
+            if (gifPath == null || gifPath.isEmpty()) {
+                tellPlayer("Recording stopped (no frames captured).");
+            } else {
+                tellPlayer("Recording saved: " + gifPath);
+            }
+        } catch (RuntimeException e) {
+            recordingActive = false;
+            tellPlayer("Unable to finish recording: " + e.getMessage());
         }
     }
 
