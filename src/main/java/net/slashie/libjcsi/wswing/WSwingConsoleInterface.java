@@ -54,6 +54,8 @@ public class WSwingConsoleInterface {
     private int inputStartY = 0;
     private int lastEchoedLength = 0;
 
+    private static final String TEMP_RECORDING_DIR = ".temp";
+
     private boolean recordingActive = false;
     private File recordingFramesDir = null;
     private String recordingSessionStamp = null;
@@ -346,8 +348,13 @@ public class WSwingConsoleInterface {
                     throw new IOException("Unable to create screenshot directory: " + screenshotDir.getPath());
                 }
 
+                File tempRoot = getTempRootDirectory(directoryName);
+                if (!tempRoot.exists() && !tempRoot.mkdirs()) {
+                    throw new IOException("Unable to create recording temp directory: " + tempRoot.getPath());
+                }
+
                 recordingSessionStamp = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
-                recordingFramesDir = new File(screenshotDir, "recording-" + recordingSessionStamp + "-frames");
+                recordingFramesDir = new File(tempRoot, "recording-" + recordingSessionStamp + "-frames");
                 if (!recordingFramesDir.exists() && !recordingFramesDir.mkdirs()) {
                     throw new IOException("Unable to create recording frames directory: " + recordingFramesDir.getPath());
                 }
@@ -434,6 +441,7 @@ public class WSwingConsoleInterface {
                 }
 
                 deleteDirectory(recordingFramesDir);
+                cleanupTempRootIfEmpty(directoryName);
                 recordingFramesDir = null;
                 recordingSessionStamp = null;
                 recordingFrameIndex = 0;
@@ -446,6 +454,100 @@ public class WSwingConsoleInterface {
             throw failure[0];
         }
         return outputPath[0];
+    }
+
+    public boolean hasPendingRecordingFrames(String directoryName) {
+        File tempRoot = getTempRootDirectory(directoryName);
+        List<File> pendingDirs = listPendingRecordingDirectories(tempRoot);
+        return !pendingDirs.isEmpty();
+    }
+
+    public String recoverPendingRecordings(String directoryName) {
+        File screenshotDir = new File(directoryName);
+        if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+            throw new RuntimeException("Unable to create screenshot directory: " + screenshotDir.getPath());
+        }
+
+        File tempRoot = getTempRootDirectory(directoryName);
+        List<File> pendingDirs = listPendingRecordingDirectories(tempRoot);
+        List<String> outputs = new ArrayList<String>();
+
+        for (File frameDir : pendingDirs) {
+            try {
+                List<File> frameFiles = listFrameFiles(frameDir);
+                if (frameFiles.isEmpty()) {
+                    continue;
+                }
+
+                String stamp = extractRecordingStamp(frameDir.getName());
+                File gifFile = new File(screenshotDir, "quarker-recording-" + stamp + ".gif");
+                writeAnimatedGif(frameFiles, gifFile, 220, true);
+                outputs.add(gifFile.getAbsolutePath());
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to recover pending recording from " + frameDir.getPath(), e);
+            } finally {
+                deleteDirectory(frameDir);
+            }
+        }
+
+        cleanupTempRootIfEmpty(directoryName);
+        if (outputs.isEmpty()) {
+            return "";
+        }
+        return String.join("; ", outputs);
+    }
+
+    public void discardPendingRecordings(String directoryName) {
+        File tempRoot = getTempRootDirectory(directoryName);
+        deleteDirectory(tempRoot);
+        recordingFramesDir = null;
+        recordingSessionStamp = null;
+        recordingFrameIndex = 0;
+        recordingActive = false;
+    }
+
+    private static File getTempRootDirectory(String directoryName) {
+        return new File(new File(directoryName), TEMP_RECORDING_DIR);
+    }
+
+    private static String extractRecordingStamp(String frameDirectoryName) {
+        final String prefix = "recording-";
+        final String suffix = "-frames";
+        if (frameDirectoryName.startsWith(prefix) && frameDirectoryName.endsWith(suffix)) {
+            return frameDirectoryName.substring(prefix.length(), frameDirectoryName.length() - suffix.length());
+        }
+        return new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
+    }
+
+    private static List<File> listPendingRecordingDirectories(File tempRoot) {
+        List<File> pending = new ArrayList<File>();
+        if (tempRoot == null || !tempRoot.exists() || !tempRoot.isDirectory()) {
+            return pending;
+        }
+
+        File[] dirs = tempRoot.listFiles(File::isDirectory);
+        if (dirs == null) {
+            return pending;
+        }
+
+        java.util.Arrays.sort(dirs, (a, b) -> a.getName().compareTo(b.getName()));
+        for (File dir : dirs) {
+            if (!listFrameFiles(dir).isEmpty()) {
+                pending.add(dir);
+            }
+        }
+        return pending;
+    }
+
+    private static void cleanupTempRootIfEmpty(String directoryName) {
+        File tempRoot = getTempRootDirectory(directoryName);
+        if (!tempRoot.exists() || !tempRoot.isDirectory()) {
+            return;
+        }
+        File[] entries = tempRoot.listFiles();
+        if (entries == null || entries.length == 0) {
+            tempRoot.delete();
+        }
     }
 
     private static List<File> listFrameFiles(File frameDir) {
