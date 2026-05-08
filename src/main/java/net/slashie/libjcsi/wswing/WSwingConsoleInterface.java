@@ -6,6 +6,8 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
@@ -35,6 +37,9 @@ public class WSwingConsoleInterface {
     private int inputStartY = 0;
     private int lastEchoedLength = 0;
 
+    private volatile int visibleXdim;
+    private volatile int visibleYdim;
+
     private char[][] chars;
     private CSIColor[][] fronts;
     private CSIColor[][] backs;
@@ -52,6 +57,8 @@ public class WSwingConsoleInterface {
     public WSwingConsoleInterface(String title, int xdim, int ydim) {
         this.xdim = xdim;
         this.ydim = ydim;
+        this.visibleXdim = xdim;
+        this.visibleYdim = ydim;
         this.chars = new char[xdim][ydim];
         this.fronts = new CSIColor[xdim][ydim];
         this.backs = new CSIColor[xdim][ydim];
@@ -66,11 +73,20 @@ public class WSwingConsoleInterface {
             public void run() {
                 JFrame f = new JFrame(title);
                 f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                f.setResizable(true);
 
                 ConsolePanel p = new ConsolePanel();
                 p.setPreferredSize(new Dimension(p.getCellWidth() * WSwingConsoleInterface.this.xdim,
                         p.getCellHeight() * WSwingConsoleInterface.this.ydim));
                 p.setFocusable(true);
+
+                // Handle window resize events
+                p.addComponentListener(new ComponentAdapter() {
+                    @Override
+                    public void componentResized(ComponentEvent e) {
+                        updateVisibleDimensions(p);
+                    }
+                });
 
                 JTextField in = new JTextField();
                 in.addActionListener(e -> {
@@ -347,6 +363,20 @@ public class WSwingConsoleInterface {
         }
     }
 
+    private void updateVisibleDimensions(ConsolePanel panel) {
+        Dimension size = panel.getSize();
+        int cellWidth = panel.getCellWidth();
+        int cellHeight = panel.getCellHeight();
+        
+        // Account for scrollbar width/height
+        int newVisibleX = Math.max(1, (size.width - 20) / cellWidth);
+        int newVisibleY = Math.max(1, (size.height - 20) / cellHeight);
+        
+        // Cap at the actual grid size
+        visibleXdim = Math.min(newVisibleX, xdim);
+        visibleYdim = Math.min(newVisibleY, ydim);
+    }
+
     private final class ConsolePanel extends JPanel {
         private final Font font = new Font(Font.MONOSPACED, Font.PLAIN, 16);
         private final int cellWidth;
@@ -377,8 +407,11 @@ public class WSwingConsoleInterface {
 
             FontMetrics fm = g.getFontMetrics();
             int baselineAdjust = fm.getAscent();
-            for (int x = 0; x < xdim; x++) {
-                for (int y = 0; y < ydim; y++) {
+            int renderWidth = Math.min(visibleXdim, xdim);
+            int renderHeight = Math.min(visibleYdim, ydim);
+            
+            for (int x = 0; x < renderWidth; x++) {
+                for (int y = 0; y < renderHeight; y++) {
                     CSIColor back = backs[x][y];
                     CSIColor front = fronts[x][y];
 
