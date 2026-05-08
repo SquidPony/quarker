@@ -9,7 +9,19 @@ import net.slashie.libjcsi.wswing.*;
 
 public class Workhorse {
 
-    private String versionNumber = "1.0";
+    private String versionNumber = loadVersion();
+
+    private static String loadVersion() {
+        try (java.io.InputStream is = Workhorse.class.getClassLoader().getResourceAsStream("version.properties")) {
+            if (is != null) {
+                java.util.Properties props = new java.util.Properties();
+                props.load(is);
+                String v = props.getProperty("version");
+                if (v != null && !v.isBlank()) return v;
+            }
+        } catch (java.io.IOException ignored) {}
+        return "unknown";
+    }
     private WSwingConsoleInterface mainInterface;
     private TextInformBox infoBox;
     private int infoSpace = 2;

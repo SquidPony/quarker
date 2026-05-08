@@ -52,7 +52,7 @@ jobs:
             );
 
             const numericTags = tags
-              .map(({ name }) => {
+              .map(({ name, commit }) => {
                 const match = name.match(/^v?(\d+)\.(\d+)$/);
                 if (!match) {
                   return null;
@@ -60,6 +60,7 @@ jobs:
 
                 return {
                   name,
+                  commit,
                   major: Number.parseInt(match[1], 10),
                   minor: Number.parseInt(match[2], 10),
                 };

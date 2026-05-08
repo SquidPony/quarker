@@ -36,10 +36,11 @@ clean:
 build:
 	mkdir -p $(CLASSES_DIR)
 	javac -d $(CLASSES_DIR) $(JAVA_FILES)
+	mkdir -p $(RES_BUILD_DIR)
 	if [[ -d "$(RES_DIR)" ]]; then \
-	  mkdir -p $(RES_BUILD_DIR); \
 	  cp -R $(RES_DIR)/. $(RES_BUILD_DIR)/; \
 	fi
+	echo "version=$(VERSION)" > $(RES_BUILD_DIR)/version.properties
 
 run: build
 	@if [[ -d "$(RES_BUILD_DIR)" ]]; then \
