@@ -4,6 +4,8 @@ Turn-based ASCII roguelike combat in a particle-physics universe.
 
 You are not a knight in a dungeon. You are a particle in unstable spacetime, absorbing quarks to grow and survive.
 
+![Quarker gameplay recording](screenshots/quarker-recording-20260508-040120-072.gif)
+
 [Latest Release](https://github.com/SquidPony/quarker/releases/latest) | [All Releases](https://github.com/SquidPony/quarker/releases)
 
 ## What Makes Quarker Different
@@ -59,10 +61,14 @@ Actions:
 - `<` go through an upward wormhole.
 - `l` enter look mode.
 - `Enter` in look mode inspects the targeted tile.
+- `p` save screenshot and print saved path.
+- `P` save screenshot silently (no message).
+- `V` start/stop turn recording; stopping exports an animated GIF.
 - `?` help (currently placeholder).
 - `Esc` exits the game.
 
-Current build notes:
+Notes:
+- Screenshots and recordings are saved to `screenshots/` in the working directory.
 - Save/load are currently disabled.
 
 ## Symbol Legend

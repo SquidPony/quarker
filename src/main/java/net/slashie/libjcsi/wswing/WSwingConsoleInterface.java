@@ -6,13 +6,30 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.ImageTypeSpecifier;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.metadata.IIOMetadata;
+import javax.imageio.metadata.IIOMetadataNode;
+import javax.imageio.stream.FileImageOutputStream;
+import javax.imageio.stream.ImageOutputStream;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -36,6 +53,13 @@ public class WSwingConsoleInterface {
     private int inputStartX = 0;
     private int inputStartY = 0;
     private int lastEchoedLength = 0;
+
+    private static final String TEMP_RECORDING_DIR = ".temp";
+
+    private boolean recordingActive = false;
+    private File recordingFramesDir = null;
+    private String recordingSessionStamp = null;
+    private int recordingFrameIndex = 0;
 
     private char[][] chars;
     private CSIColor[][] fronts;
@@ -271,6 +295,361 @@ public class WSwingConsoleInterface {
         backs[x][y] = back == null ? CSIColor.BLACK : back;
     }
 
+    public String saveScreenshot(String directoryName) {
+        final String[] outputPath = new String[1];
+        final RuntimeException[] failure = new RuntimeException[1];
+
+        runOnEdtAndWait(() -> {
+            try {
+                File directory = new File(directoryName);
+                if (!directory.exists() && !directory.mkdirs()) {
+                    throw new IOException("Unable to create screenshot directory: " + directory.getPath());
+                }
+
+                String timestamp = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
+                File outputFile = new File(directory, "quarker-" + timestamp + ".png");
+
+                int width = Math.max(1, panel.getWidth());
+                int height = Math.max(1, panel.getHeight());
+                BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D graphics = image.createGraphics();
+                panel.paint(graphics);
+                graphics.dispose();
+
+                if (!ImageIO.write(image, "png", outputFile)) {
+                    throw new IOException("No PNG image writer available");
+                }
+
+                outputPath[0] = outputFile.getAbsolutePath();
+            } catch (IOException e) {
+                failure[0] = new RuntimeException("Unable to save screenshot", e);
+            }
+        });
+
+        if (failure[0] != null) {
+            throw failure[0];
+        }
+        return outputPath[0];
+    }
+
+    public String startRecording(String directoryName) {
+        final String[] outputPath = new String[1];
+        final RuntimeException[] failure = new RuntimeException[1];
+
+        runOnEdtAndWait(() -> {
+            try {
+                if (recordingActive) {
+                    outputPath[0] = recordingFramesDir == null ? "" : recordingFramesDir.getAbsolutePath();
+                    return;
+                }
+
+                File screenshotDir = new File(directoryName);
+                if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+                    throw new IOException("Unable to create screenshot directory: " + screenshotDir.getPath());
+                }
+
+                File tempRoot = getTempRootDirectory(directoryName);
+                if (!tempRoot.exists() && !tempRoot.mkdirs()) {
+                    throw new IOException("Unable to create recording temp directory: " + tempRoot.getPath());
+                }
+
+                recordingSessionStamp = new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
+                recordingFramesDir = new File(tempRoot, "recording-" + recordingSessionStamp + "-frames");
+                if (!recordingFramesDir.exists() && !recordingFramesDir.mkdirs()) {
+                    throw new IOException("Unable to create recording frames directory: " + recordingFramesDir.getPath());
+                }
+
+                recordingFrameIndex = 0;
+                recordingActive = true;
+                outputPath[0] = recordingFramesDir.getAbsolutePath();
+            } catch (IOException e) {
+                failure[0] = new RuntimeException("Unable to start recording", e);
+            }
+        });
+
+        if (failure[0] != null) {
+            throw failure[0];
+        }
+        return outputPath[0];
+    }
+
+    public int captureRecordingFrame() {
+        final int[] frameNumber = new int[] {0};
+        final RuntimeException[] failure = new RuntimeException[1];
+
+        runOnEdtAndWait(() -> {
+            try {
+                if (!recordingActive || recordingFramesDir == null) {
+                    return;
+                }
+
+                recordingFrameIndex++;
+                File frameFile = new File(recordingFramesDir, String.format("frame-%06d.png", recordingFrameIndex));
+
+                int width = Math.max(1, panel.getWidth());
+                int height = Math.max(1, panel.getHeight());
+                BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D graphics = image.createGraphics();
+                panel.paint(graphics);
+                graphics.dispose();
+
+                if (!ImageIO.write(image, "png", frameFile)) {
+                    throw new IOException("No PNG image writer available");
+                }
+
+                frameNumber[0] = recordingFrameIndex;
+            } catch (IOException e) {
+                failure[0] = new RuntimeException("Unable to capture recording frame", e);
+            }
+        });
+
+        if (failure[0] != null) {
+            throw failure[0];
+        }
+        return frameNumber[0];
+    }
+
+    public String stopRecording(String directoryName) {
+        final String[] outputPath = new String[1];
+        final RuntimeException[] failure = new RuntimeException[1];
+
+        runOnEdtAndWait(() -> {
+            try {
+                if (!recordingActive) {
+                    outputPath[0] = "";
+                    return;
+                }
+
+                recordingActive = false;
+
+                File screenshotDir = new File(directoryName);
+                if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+                    throw new IOException("Unable to create screenshot directory: " + screenshotDir.getPath());
+                }
+
+                String stamp = recordingSessionStamp == null
+                        ? new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date())
+                        : recordingSessionStamp;
+                File gifFile = new File(screenshotDir, "quarker-recording-" + stamp + ".gif");
+
+                List<File> frameFiles = listFrameFiles(recordingFramesDir);
+                if (frameFiles.isEmpty()) {
+                    outputPath[0] = "";
+                } else {
+                    writeAnimatedGif(frameFiles, gifFile, 220, true);
+                    outputPath[0] = gifFile.getAbsolutePath();
+                }
+
+                deleteDirectory(recordingFramesDir);
+                cleanupTempRootIfEmpty(directoryName);
+                recordingFramesDir = null;
+                recordingSessionStamp = null;
+                recordingFrameIndex = 0;
+            } catch (IOException e) {
+                failure[0] = new RuntimeException("Unable to stop recording", e);
+            }
+        });
+
+        if (failure[0] != null) {
+            throw failure[0];
+        }
+        return outputPath[0];
+    }
+
+    public void finalizeRecordingOnShutdown(String directoryName) {
+        try {
+            if (recordingActive && recordingFramesDir != null) {
+                File activeDir = recordingFramesDir;
+                String activeStamp = recordingSessionStamp;
+
+                recordingActive = false;
+                recordingFramesDir = null;
+                recordingSessionStamp = null;
+                recordingFrameIndex = 0;
+
+                try {
+                    finalizeRecordingDirectory(directoryName, activeDir, activeStamp);
+                } catch (IOException ioException) {
+                    throw new RuntimeException("Unable to finalize active recording on shutdown", ioException);
+                }
+            }
+
+            // Also recover any abandoned temp frame directories from previous interrupted runs.
+            if (hasPendingRecordingFrames(directoryName)) {
+                recoverPendingRecordings(directoryName);
+            }
+        } catch (RuntimeException e) {
+            try {
+                discardPendingRecordings(directoryName);
+            } catch (RuntimeException ignored) {
+                // Best-effort cleanup only during JVM shutdown.
+            }
+        }
+    }
+
+    public boolean hasPendingRecordingFrames(String directoryName) {
+        File tempRoot = getTempRootDirectory(directoryName);
+        List<File> pendingDirs = listPendingRecordingDirectories(tempRoot);
+        return !pendingDirs.isEmpty();
+    }
+
+    public String recoverPendingRecordings(String directoryName) {
+        File screenshotDir = new File(directoryName);
+        if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+            throw new RuntimeException("Unable to create screenshot directory: " + screenshotDir.getPath());
+        }
+
+        File tempRoot = getTempRootDirectory(directoryName);
+        List<File> pendingDirs = listPendingRecordingDirectories(tempRoot);
+        List<String> outputs = new ArrayList<String>();
+
+        for (File frameDir : pendingDirs) {
+            try {
+                String recovered = finalizeRecordingDirectory(directoryName, frameDir, extractRecordingStamp(frameDir.getName()));
+                if (recovered != null && !recovered.isEmpty()) {
+                    outputs.add(recovered);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to recover pending recording from " + frameDir.getPath(), e);
+            }
+        }
+
+        cleanupTempRootIfEmpty(directoryName);
+        if (outputs.isEmpty()) {
+            return "";
+        }
+        return String.join("; ", outputs);
+    }
+
+    public void discardPendingRecordings(String directoryName) {
+        File tempRoot = getTempRootDirectory(directoryName);
+        deleteDirectory(tempRoot);
+        recordingFramesDir = null;
+        recordingSessionStamp = null;
+        recordingFrameIndex = 0;
+        recordingActive = false;
+    }
+
+    private static File getTempRootDirectory(String directoryName) {
+        return new File(new File(directoryName), TEMP_RECORDING_DIR);
+    }
+
+    private static String finalizeRecordingDirectory(String directoryName, File frameDir, String stamp) throws IOException {
+        File screenshotDir = new File(directoryName);
+        if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+            throw new IOException("Unable to create screenshot directory: " + screenshotDir.getPath());
+        }
+
+        List<File> frameFiles = listFrameFiles(frameDir);
+        try {
+            if (frameFiles.isEmpty()) {
+                return "";
+            }
+            File gifFile = new File(screenshotDir, "quarker-recording-" + stamp + ".gif");
+            writeAnimatedGif(frameFiles, gifFile, 220, true);
+            return gifFile.getAbsolutePath();
+        } finally {
+            deleteDirectory(frameDir);
+            cleanupTempRootIfEmpty(directoryName);
+        }
+    }
+
+    private static String extractRecordingStamp(String frameDirectoryName) {
+        final String prefix = "recording-";
+        final String suffix = "-frames";
+        if (frameDirectoryName.startsWith(prefix) && frameDirectoryName.endsWith(suffix)) {
+            return frameDirectoryName.substring(prefix.length(), frameDirectoryName.length() - suffix.length());
+        }
+        return new SimpleDateFormat("yyyyMMdd-HHmmss-SSS").format(new Date());
+    }
+
+    private static List<File> listPendingRecordingDirectories(File tempRoot) {
+        List<File> pending = new ArrayList<File>();
+        if (tempRoot == null || !tempRoot.exists() || !tempRoot.isDirectory()) {
+            return pending;
+        }
+
+        File[] dirs = tempRoot.listFiles(File::isDirectory);
+        if (dirs == null) {
+            return pending;
+        }
+
+        java.util.Arrays.sort(dirs, (a, b) -> a.getName().compareTo(b.getName()));
+        for (File dir : dirs) {
+            if (!listFrameFiles(dir).isEmpty()) {
+                pending.add(dir);
+            }
+        }
+        return pending;
+    }
+
+    private static void cleanupTempRootIfEmpty(String directoryName) {
+        File tempRoot = getTempRootDirectory(directoryName);
+        if (!tempRoot.exists() || !tempRoot.isDirectory()) {
+            return;
+        }
+        File[] entries = tempRoot.listFiles();
+        if (entries == null || entries.length == 0) {
+            tempRoot.delete();
+        }
+    }
+
+    private static List<File> listFrameFiles(File frameDir) {
+        List<File> files = new ArrayList<File>();
+        if (frameDir == null || !frameDir.exists() || !frameDir.isDirectory()) {
+            return files;
+        }
+        File[] entries = frameDir.listFiles((d, name) -> name.endsWith(".png"));
+        if (entries == null) {
+            return files;
+        }
+        java.util.Arrays.sort(entries, (a, b) -> a.getName().compareTo(b.getName()));
+        for (File file : entries) {
+            files.add(file);
+        }
+        return files;
+    }
+
+    private static void writeAnimatedGif(List<File> frameFiles, File outputFile, int delayMs, boolean loopForever)
+            throws IOException {
+        if (frameFiles.isEmpty()) {
+            return;
+        }
+
+        BufferedImage first = ImageIO.read(frameFiles.get(0));
+        if (first == null) {
+            throw new IOException("Unable to read first frame image");
+        }
+
+        ImageOutputStream outputStream = new FileImageOutputStream(outputFile);
+        try (GifSequenceWriter gifWriter = new GifSequenceWriter(outputStream, first.getType(), delayMs, loopForever)) {
+            gifWriter.writeToSequence(first);
+            for (int i = 1; i < frameFiles.size(); i++) {
+                BufferedImage frame = ImageIO.read(frameFiles.get(i));
+                if (frame != null) {
+                    gifWriter.writeToSequence(frame);
+                }
+            }
+        }
+    }
+
+    private static void deleteDirectory(File dir) {
+        if (dir == null || !dir.exists()) {
+            return;
+        }
+        File[] children = dir.listFiles();
+        if (children != null) {
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    deleteDirectory(child);
+                } else {
+                    child.delete();
+                }
+            }
+        }
+        dir.delete();
+    }
+
     private static void clearArrays(char[][] c, CSIColor[][] f, CSIColor[][] b) {
         for (int x = 0; x < c.length; x++) {
             for (int y = 0; y < c[x].length; y++) {
@@ -303,6 +682,36 @@ public class WSwingConsoleInterface {
                 return new CharKey(CharKey.ESC);
             case KeyEvent.VK_ENTER:
                 return new CharKey(CharKey.ENTER);
+            case KeyEvent.VK_P:
+                return new CharKey(e.isShiftDown() ? CharKey.CAPITAL_P : CharKey.P);
+            case KeyEvent.VK_S:
+                return new CharKey(CharKey.S);
+            case KeyEvent.VK_R:
+                return new CharKey(CharKey.R);
+            case KeyEvent.VK_L:
+                return new CharKey(CharKey.L);
+            case KeyEvent.VK_B:
+                return new CharKey(CharKey.B);
+            case KeyEvent.VK_V:
+                return new CharKey(e.isShiftDown() ? CharKey.CAPITAL_V : CharKey.V);
+            case KeyEvent.VK_H:
+                return new CharKey(CharKey.h);
+            case KeyEvent.VK_J:
+                return new CharKey(CharKey.j);
+            case KeyEvent.VK_K:
+                return new CharKey(CharKey.k);
+            case KeyEvent.VK_Y:
+                return new CharKey(CharKey.y);
+            case KeyEvent.VK_U:
+                return new CharKey(CharKey.u);
+            case KeyEvent.VK_N:
+                return new CharKey(CharKey.n);
+            case KeyEvent.VK_PERIOD:
+                return new CharKey(e.isShiftDown() ? CharKey.MORETHAN : CharKey.DOT);
+            case KeyEvent.VK_COMMA:
+                return new CharKey(e.isShiftDown() ? CharKey.LESSTHAN : ',');
+            case KeyEvent.VK_SLASH:
+                return new CharKey(e.isShiftDown() ? CharKey.QUESTION : '/');
             case KeyEvent.VK_UP:
                 return new CharKey(CharKey.ARROW_UP);
             case KeyEvent.VK_RIGHT:
@@ -434,6 +843,82 @@ public class WSwingConsoleInterface {
                     g.drawString(String.valueOf(chars[x][y]), x * cellW, (y * cellH) + baselineAdjust);
                 }
             }
+        }
+    }
+
+    private static final class GifSequenceWriter implements AutoCloseable {
+        private final ImageWriter gifWriter;
+        private final ImageWriteParam imageWriteParam;
+        private final IIOMetadata imageMetaData;
+
+        private GifSequenceWriter(ImageOutputStream outputStream, int imageType, int timeBetweenFramesMS,
+                boolean loopContinuously) throws IOException {
+            gifWriter = getWriter();
+            imageWriteParam = gifWriter.getDefaultWriteParam();
+            ImageTypeSpecifier imageTypeSpecifier = ImageTypeSpecifier.createFromBufferedImageType(imageType);
+
+            imageMetaData = gifWriter.getDefaultImageMetadata(imageTypeSpecifier, imageWriteParam);
+
+            String metaFormatName = imageMetaData.getNativeMetadataFormatName();
+            IIOMetadataNode root = (IIOMetadataNode) imageMetaData.getAsTree(metaFormatName);
+
+            IIOMetadataNode graphicsControlExtensionNode = getNode(root, "GraphicControlExtension");
+            graphicsControlExtensionNode.setAttribute("disposalMethod", "none");
+            graphicsControlExtensionNode.setAttribute("userInputFlag", "FALSE");
+            graphicsControlExtensionNode.setAttribute("transparentColorFlag", "FALSE");
+            graphicsControlExtensionNode.setAttribute("delayTime", Integer.toString(Math.max(1, timeBetweenFramesMS / 10)));
+            graphicsControlExtensionNode.setAttribute("transparentColorIndex", "0");
+
+            IIOMetadataNode commentsNode = getNode(root, "CommentExtensions");
+            commentsNode.setAttribute("CommentExtension", "Created by Quarker");
+
+            IIOMetadataNode appEntensionsNode = getNode(root, "ApplicationExtensions");
+
+            IIOMetadataNode child = new IIOMetadataNode("ApplicationExtension");
+            child.setAttribute("applicationID", "NETSCAPE");
+            child.setAttribute("authenticationCode", "2.0");
+
+            int loop = loopContinuously ? 0 : 1;
+            child.setUserObject(new byte[] {
+                    0x1,
+                    (byte) (loop & 0xFF),
+                    (byte) ((loop >> 8) & 0xFF)
+            });
+            appEntensionsNode.appendChild(child);
+
+            imageMetaData.setFromTree(metaFormatName, root);
+
+            gifWriter.setOutput(outputStream);
+            gifWriter.prepareWriteSequence(null);
+        }
+
+        private void writeToSequence(BufferedImage img) throws IOException {
+            gifWriter.writeToSequence(new javax.imageio.IIOImage(img, null, imageMetaData), imageWriteParam);
+        }
+
+        @Override
+        public void close() throws IOException {
+            gifWriter.endWriteSequence();
+        }
+
+        private static ImageWriter getWriter() throws IOException {
+            Iterator<ImageWriter> iter = ImageIO.getImageWritersBySuffix("gif");
+            if (!iter.hasNext()) {
+                throw new IOException("No GIF Image Writers Exist");
+            }
+            return iter.next();
+        }
+
+        private static IIOMetadataNode getNode(IIOMetadataNode rootNode, String nodeName) {
+            int nNodes = rootNode.getLength();
+            for (int i = 0; i < nNodes; i++) {
+                if (rootNode.item(i).getNodeName().equalsIgnoreCase(nodeName)) {
+                    return (IIOMetadataNode) rootNode.item(i);
+                }
+            }
+            IIOMetadataNode node = new IIOMetadataNode(nodeName);
+            rootNode.appendChild(node);
+            return node;
         }
     }
 }

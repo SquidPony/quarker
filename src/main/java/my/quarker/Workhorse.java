@@ -9,7 +9,7 @@ import net.slashie.libjcsi.wswing.*;
 
 public class Workhorse {
 
-    private String versionNumber = "0.06";
+    private String versionNumber = "1.0";
     private WSwingConsoleInterface mainInterface;
     private TextInformBox infoBox;
     private int infoSpace = 2;
@@ -25,6 +25,7 @@ public class Workhorse {
     private XpLevels quarkLevels = new XpLevels();
     private PlayerObject player = new PlayerObject();
     private ArrayList<CSIColor> colorList = new ArrayList<CSIColor>();
+    private volatile boolean recordingActive = false;
     private String eol = System.getProperty("line.separator");
     static final private int[][] FOV_MULTIPLIER = {
         {1, 0, 0, -1, -1, 0, 0, 1},
@@ -40,6 +41,14 @@ public class Workhorse {
             eiie.printStackTrace();
             System.exit(-1);
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (!recordingActive) {
+                return;
+            }
+            mainInterface.finalizeRecordingOnShutdown("screenshots");
+        }, "quarker-recording-shutdown"));
+
         initEverything();
         mainInterface.refresh();
         initializePlayer();
@@ -115,6 +124,14 @@ public class Workhorse {
         displayMap();
 
         mainInterface.refresh();
+        if (recordingActive) {
+            try {
+                mainInterface.captureRecordingFrame();
+            } catch (RuntimeException e) {
+                recordingActive = false;
+                tellPlayer("Recording stopped due to error: " + e.getMessage());
+            }
+        }
     }
 
     private void restTurn() {
@@ -159,6 +176,12 @@ public class Workhorse {
             case CharKey.S:
                 saveGame();
                 break;
+            case CharKey.P:
+                takeScreenshot();
+                break;
+            case CharKey.CAPITAL_P:
+                takeScreenshotSilent();
+                break;
             case CharKey.R:
                 loadGame();
                 break;
@@ -167,6 +190,9 @@ public class Workhorse {
                 break;
             case CharKey.B:
                 buildNewLevel(true);
+                break;
+            case CharKey.CAPITAL_V:
+                toggleRecording();
                 break;
             case CharKey.QUESTION:
                 showHelp();
@@ -251,6 +277,7 @@ public class Workhorse {
     }
 
     private void leaving(String args) {
+        finalizeRecordingBeforeExit();
         askPlayer(2, args + "Thanks for playing.  Press Enter to exit now.");
         System.exit(0);
     }
@@ -832,7 +859,112 @@ public class Workhorse {
         tellPlayer("Saving is currently disabled.");
     }
 
+    private void takeScreenshot() {
+        try {
+            String path = mainInterface.saveScreenshot("screenshots");
+            tellPlayer("Screenshot saved: " + path);
+        } catch (RuntimeException e) {
+            tellPlayer("Screenshot failed: " + e.getMessage());
+        }
+    }
+
+    private void takeScreenshotSilent() {
+        try {
+            mainInterface.saveScreenshot("screenshots");
+        } catch (RuntimeException e) {
+            // Silent command by design.
+        }
+    }
+
+    private void toggleRecording() {
+        if (!recordingActive) {
+            try {
+                String path = mainInterface.startRecording("screenshots");
+                recordingActive = true;
+                tellPlayer("Recording started: " + path);
+            } catch (RuntimeException e) {
+                tellPlayer("Unable to start recording: " + e.getMessage());
+            }
+            return;
+        }
+
+        try {
+            String gifPath = mainInterface.stopRecording("screenshots");
+            recordingActive = false;
+            if (gifPath == null || gifPath.isEmpty()) {
+                tellPlayer("Recording stopped (no frames captured).");
+            } else {
+                tellPlayer("Recording saved: " + gifPath);
+            }
+        } catch (RuntimeException e) {
+            recordingActive = false;
+            tellPlayer("Unable to finish recording: " + e.getMessage());
+        }
+    }
+
+    private void finalizeRecordingBeforeExit() {
+        if (!recordingActive) {
+            return;
+        }
+        try {
+            String gifPath = mainInterface.stopRecording("screenshots");
+            recordingActive = false;
+            if (gifPath == null || gifPath.isEmpty()) {
+                tellPlayer("Recording stopped during exit (no frames captured).");
+            } else {
+                tellPlayer("Recording finalized on exit: " + gifPath);
+            }
+        } catch (RuntimeException e) {
+            recordingActive = false;
+            try {
+                mainInterface.discardPendingRecordings("screenshots");
+            } catch (RuntimeException ignored) {
+                // Cleanup best effort.
+            }
+            tellPlayer("Recording could not be finalized; temporary frames were cleaned up.");
+        }
+    }
+
+    private void handlePendingRecordingRecoveryOnLoad() {
+        if (!mainInterface.hasPendingRecordingFrames("screenshots")) {
+            return;
+        }
+
+        String answer = askPlayer(3,
+                "Found leftover recording frames in screenshots/.temp. "
+                + "Make GIF(s) from them? Enter y to recover, or n to delete.");
+        String normalized = answer == null ? "" : answer.trim().toLowerCase();
+        boolean recover = normalized.startsWith("y");
+
+        if (recover) {
+            try {
+                String outputs = mainInterface.recoverPendingRecordings("screenshots");
+                if (outputs == null || outputs.isEmpty()) {
+                    tellPlayer("No valid pending frames found to recover.");
+                } else {
+                    tellPlayer("Recovered recording(s): " + outputs);
+                }
+            } catch (RuntimeException e) {
+                tellPlayer("Unable to recover pending frames: " + e.getMessage());
+                try {
+                    mainInterface.discardPendingRecordings("screenshots");
+                    tellPlayer("Pending frame temp files were cleaned up.");
+                } catch (RuntimeException ignored) {
+                    tellPlayer("Pending frame cleanup also failed.");
+                }
+            }
+        } else {
+            try {
+                mainInterface.discardPendingRecordings("screenshots");
+                tellPlayer("Pending recording frames deleted.");
+            } catch (RuntimeException e) {
+                tellPlayer("Unable to delete pending recording frames: " + e.getMessage());
+            }
+        }
+    }
+
     private void loadGame() {
+        handlePendingRecordingRecoveryOnLoad();
         tellPlayer("Loading currently disabled.");
     }
 }
