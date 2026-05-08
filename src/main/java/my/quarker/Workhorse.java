@@ -9,7 +9,7 @@ import net.slashie.libjcsi.wswing.*;
 
 public class Workhorse {
 
-    private String versionNumber = "0.06";
+    private String versionNumber = "1.0";
     private WSwingConsoleInterface mainInterface;
     private TextInformBox infoBox;
     private int infoSpace = 2;
