@@ -4,15 +4,90 @@ on:
   push:
     branches:
       - "**"
-    tags:
-      - "v*"
   workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: build-and-release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      build_version: ${{ steps.compute.outputs.build_version }}
+      release_tag: ${{ steps.compute.outputs.release_tag }}
+      should_release: ${{ steps.compute.outputs.should_release }}
+      should_create_tag: ${{ steps.compute.outputs.should_create_tag }}
+
+    steps:
+      - name: Compute build and release version
+        id: compute
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const isMainPush =
+              context.eventName === 'push' &&
+              context.ref === 'refs/heads/main';
+
+            const sanitize = (value) => value.replaceAll('/', '-');
+
+            if (!isMainPush) {
+              core.setOutput('build_version', sanitize(context.ref.replace('refs/heads/', '')));
+              core.setOutput('release_tag', '');
+              core.setOutput('should_release', 'false');
+              core.setOutput('should_create_tag', 'false');
+              return;
+            }
+
+            const tags = await github.paginate(
+              github.rest.repos.listTags,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+              }
+            );
+
+            const numericTags = tags
+              .map(({ name }) => {
+                const match = name.match(/^v?(\d+)\.(\d+)$/);
+                if (!match) {
+                  return null;
+                }
+
+                return {
+                  name,
+                  major: Number.parseInt(match[1], 10),
+                  minor: Number.parseInt(match[2], 10),
+                };
+              })
+              .filter(Boolean)
+              .sort((left, right) => {
+                if (left.major !== right.major) {
+                  return left.major - right.major;
+                }
+
+                return left.minor - right.minor;
+              });
+
+            const latest = numericTags.at(-1);
+            const existingTag = numericTags.find((tag) => tag.commit.sha === context.sha);
+            const nextTag = existingTag
+              ? existingTag.name.replace(/^v/, '')
+              : latest
+                ? `${latest.major}.${latest.minor + 1}`
+                : '1.0';
+
+            core.setOutput('build_version', nextTag);
+            core.setOutput('release_tag', nextTag);
+            core.setOutput('should_release', 'true');
+            core.setOutput('should_create_tag', existingTag ? 'false' : 'true');
+
   build:
+    needs: version
     runs-on: ubuntu-latest
 
     steps:
@@ -27,28 +102,44 @@ jobs:
 
       - name: Build release artifacts
         run: |
-          VERSION="$(echo '${{ github.ref_name }}' | tr '/' '-')"
-          make clean release-artifacts VERSION="$VERSION"
+          make clean release-artifacts VERSION="${{ needs.version.outputs.build_version }}"
 
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: quarker-${{ github.ref_name != '' && replace(github.ref_name, '/', '-') || 'local' }}
+          name: quarker-${{ needs.version.outputs.build_version }}
           path: build/artifacts/*
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    if: needs.version.outputs.should_release == 'true'
+    needs:
+      - version
+      - build
     runs-on: ubuntu-latest
 
     steps:
+      - name: Create release tag
+        if: needs.version.outputs.should_create_tag == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ needs.version.outputs.release_tag }}',
+              sha: context.sha,
+            });
+
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
-          name: quarker-${{ replace(github.ref_name, '/', '-') }}
+          name: quarker-${{ needs.version.outputs.release_tag }}
           path: build/artifacts
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ needs.version.outputs.release_tag }}
+          name: ${{ needs.version.outputs.release_tag }}
+          generate_release_notes: true
           files: build/artifacts/*
