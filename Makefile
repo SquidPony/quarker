@@ -11,6 +11,7 @@ DIST_ROOT := $(BUILD_DIR)/dist
 ARTIFACTS_DIR := $(BUILD_DIR)/artifacts
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo local)
+override VERSION := $(subst /,-,$(VERSION))
 DIST_NAME := quarker-$(VERSION)
 DIST_DIR := $(DIST_ROOT)/$(DIST_NAME)
 JAR_NAME := quarker.jar
