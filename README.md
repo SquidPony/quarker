@@ -1,92 +1,92 @@
 # Quarker
 
-Quarker is a fast, turn-based ASCII roguelike where you play as a particle moving through unstable spacetime, fighting color-charged quarks, and growing by absorbing what you defeat.
+Turn-based ASCII roguelike combat in a particle-physics universe.
 
-If you build games, Quarker is interesting because it does not just reskin fantasy roguelike conventions. Its verbs, stats, enemies, and level transitions are built around particle-physics flavor: mass instead of HP, spacetime levels instead of dungeon floors, and wormholes instead of stairs.
+You are not a knight in a dungeon. You are a particle in unstable spacetime, absorbing quarks to grow and survive.
 
-## Why Quarker Feels Different
+[Latest Release](https://github.com/SquidPony/quarker/releases/latest) | [All Releases](https://github.com/SquidPony/quarker/releases)
 
-- Particle identity over fantasy class identity:
-  - You are a particle avatar, not a warrior/wizard archetype.
-- Physics-themed combat language with real gameplay impact:
-  - Combat and progression are framed in mass, penetration, deflection, and absorption.
-- Growth by absorption:
-  - Defeating enemies increases your size (XP), and size drives level-up thresholds.
-- Quark ecosystem instead of generic monsters:
-  - Enemies include up/down/strange/charm/beauty/truth quarks and anti-variants with chromatic identity.
-- Spacetime traversal:
-  - Level transitions are wormholes using > and <, with explicit directionality.
-- Practical old-school architecture, modernized runtime:
-  - The project keeps a clean Java/Swing ASCII loop and now builds/runs on JDK 25.
+## What Makes Quarker Different
+
+- Theme drives systems, not just flavor text:
+  - Mass instead of HP, spacetime levels instead of dungeon floors, wormholes instead of stairs.
+- Progression through absorption:
+  - Defeated quarks increase your size (XP), and size gates level-up thresholds.
+- Distinct enemy ecosystem:
+  - Up/down/strange/charm/beauty/truth quarks plus anti-variants with chromatic identity.
+- Compact but expressive architecture:
+  - Old-school ASCII game loop, modernized to run/build on JDK 25.
+
+## At A Glance
+
+| Category | Details |
+| --- | --- |
+| Genre | Turn-based ASCII roguelike |
+| Runtime | Java 25+ |
+| Rendering | Swing console interface |
+| Build | make |
+| Core Fantasy | Particle combat in spacetime |
 
 ## Quick Start
 
-Requirements:
-- Java 25+
-- make
-
-Build:
-- make build
-
-Run:
-- make run
+```bash
+make build
+make run
+```
 
 Package release artifacts:
-- make package
+
+```bash
+make package
+```
 
 ## How To Play
 
-Your goal:
-- Survive, increase your size by absorbing quarks, and progress through spacetime levels.
+Goal:
+- Survive, absorb quarks, and advance through spacetime levels.
 
-Core loop:
-- Move, collide, and fight in turns.
-- Enemies act after your turn.
-- If your mass drops below 1, the run ends.
+Turn loop:
+- You act, then enemies act.
+- If your mass drops below 1, your run ends.
 
 Movement:
-- Arrow keys or roguelike vi keys:
-  - h j k l for cardinal movement
-  - y u b n for diagonal movement
-- . to wait a turn
+- Arrow keys, or vi keys `h j k l`.
+- Diagonals with `y u b n`.
+- `.` waits one turn.
 
 Actions:
-- > move through a downward wormhole
-- < move through an upward wormhole
-- l enter look mode
-- Enter in look mode to inspect the tile under the cursor
-- ? show help (placeholder in current build)
-- Esc exit the game
+- `>` go through a downward wormhole.
+- `<` go through an upward wormhole.
+- `l` enter look mode.
+- `Enter` in look mode inspects the targeted tile.
+- `?` help (currently placeholder).
+- `Esc` exits the game.
 
-Current status notes:
-- Saving and loading are currently disabled in this build.
+Current build notes:
+- Save/load are currently disabled.
 
-## Legend
+## Symbol Legend
 
-- @ player particle
-- . floor
-- # fold wall/obstacle
-- > and < wormholes
-- ! item (for example, gluon pickups)
-- Lettered quarks such as u, d, s, c, b, t are enemy particles
+- `@` player particle
+- `.` floor
+- `#` fold wall
+- `>` `<` wormholes
+- `!` item pickup (for example, gluon)
+- `u d s c b t` quark enemies (plus anti-variants)
 
-## For Fellow Game Developers
+## Developer Angle
 
-Quarker is a good reference project if you are interested in:
+Quarker is useful if you want to study:
 
-- Building a readable turn engine around a tiny set of input verbs.
-- Creating a distinctive theme by changing systems language, not just art.
-- Running an ASCII-style game UI on modern Java with a lightweight Swing console layer.
-- Keeping CI and release packaging simple with make + GitHub Actions.
+- A readable turn engine with a small, high-signal input vocabulary.
+- How to build a unique game identity by changing mechanics language and progression semantics.
+- Practical ASCII rendering and input handling in modern Java/Swing.
+- Lightweight CI/release packaging with make and GitHub Actions.
 
-## Releases
+## Visual Preview
 
-Latest release:
-- https://github.com/SquidPony/quarker/releases/latest
-
-All releases:
-- https://github.com/SquidPony/quarker/releases
+I attempted to capture a live in-game screenshot in this environment, but desktop capture returns a black frame for Swing windows here. If you run locally, I can add your screenshot in a follow-up commit.
 
 ## License
 
-No license file is currently included in this repository. If you plan to redistribute or fork commercially, confirm licensing with the project owner first.
+No license file is currently included in this repository. Confirm licensing with the project owner before redistribution.
