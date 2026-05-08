@@ -456,6 +456,37 @@ public class WSwingConsoleInterface {
         return outputPath[0];
     }
 
+    public void finalizeRecordingOnShutdown(String directoryName) {
+        try {
+            if (recordingActive && recordingFramesDir != null) {
+                File activeDir = recordingFramesDir;
+                String activeStamp = recordingSessionStamp;
+
+                recordingActive = false;
+                recordingFramesDir = null;
+                recordingSessionStamp = null;
+                recordingFrameIndex = 0;
+
+                try {
+                    finalizeRecordingDirectory(directoryName, activeDir, activeStamp);
+                } catch (IOException ioException) {
+                    throw new RuntimeException("Unable to finalize active recording on shutdown", ioException);
+                }
+            }
+
+            // Also recover any abandoned temp frame directories from previous interrupted runs.
+            if (hasPendingRecordingFrames(directoryName)) {
+                recoverPendingRecordings(directoryName);
+            }
+        } catch (RuntimeException e) {
+            try {
+                discardPendingRecordings(directoryName);
+            } catch (RuntimeException ignored) {
+                // Best-effort cleanup only during JVM shutdown.
+            }
+        }
+    }
+
     public boolean hasPendingRecordingFrames(String directoryName) {
         File tempRoot = getTempRootDirectory(directoryName);
         List<File> pendingDirs = listPendingRecordingDirectories(tempRoot);
@@ -474,19 +505,12 @@ public class WSwingConsoleInterface {
 
         for (File frameDir : pendingDirs) {
             try {
-                List<File> frameFiles = listFrameFiles(frameDir);
-                if (frameFiles.isEmpty()) {
-                    continue;
+                String recovered = finalizeRecordingDirectory(directoryName, frameDir, extractRecordingStamp(frameDir.getName()));
+                if (recovered != null && !recovered.isEmpty()) {
+                    outputs.add(recovered);
                 }
-
-                String stamp = extractRecordingStamp(frameDir.getName());
-                File gifFile = new File(screenshotDir, "quarker-recording-" + stamp + ".gif");
-                writeAnimatedGif(frameFiles, gifFile, 220, true);
-                outputs.add(gifFile.getAbsolutePath());
             } catch (IOException e) {
                 throw new RuntimeException("Unable to recover pending recording from " + frameDir.getPath(), e);
-            } finally {
-                deleteDirectory(frameDir);
             }
         }
 
@@ -508,6 +532,26 @@ public class WSwingConsoleInterface {
 
     private static File getTempRootDirectory(String directoryName) {
         return new File(new File(directoryName), TEMP_RECORDING_DIR);
+    }
+
+    private static String finalizeRecordingDirectory(String directoryName, File frameDir, String stamp) throws IOException {
+        File screenshotDir = new File(directoryName);
+        if (!screenshotDir.exists() && !screenshotDir.mkdirs()) {
+            throw new IOException("Unable to create screenshot directory: " + screenshotDir.getPath());
+        }
+
+        List<File> frameFiles = listFrameFiles(frameDir);
+        try {
+            if (frameFiles.isEmpty()) {
+                return "";
+            }
+            File gifFile = new File(screenshotDir, "quarker-recording-" + stamp + ".gif");
+            writeAnimatedGif(frameFiles, gifFile, 220, true);
+            return gifFile.getAbsolutePath();
+        } finally {
+            deleteDirectory(frameDir);
+            cleanupTempRootIfEmpty(directoryName);
+        }
     }
 
     private static String extractRecordingStamp(String frameDirectoryName) {

@@ -46,15 +46,7 @@ public class Workhorse {
             if (!recordingActive) {
                 return;
             }
-            try {
-                mainInterface.stopRecording("screenshots");
-            } catch (RuntimeException e) {
-                try {
-                    mainInterface.discardPendingRecordings("screenshots");
-                } catch (RuntimeException ignored) {
-                    // Last-chance cleanup should never block shutdown.
-                }
-            }
+            mainInterface.finalizeRecordingOnShutdown("screenshots");
         }, "quarker-recording-shutdown"));
 
         initEverything();
