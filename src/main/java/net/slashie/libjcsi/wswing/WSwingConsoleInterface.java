@@ -37,9 +37,6 @@ public class WSwingConsoleInterface {
     private int inputStartY = 0;
     private int lastEchoedLength = 0;
 
-    private volatile int visibleXdim;
-    private volatile int visibleYdim;
-
     private char[][] chars;
     private CSIColor[][] fronts;
     private CSIColor[][] backs;
@@ -57,8 +54,6 @@ public class WSwingConsoleInterface {
     public WSwingConsoleInterface(String title, int xdim, int ydim) {
         this.xdim = xdim;
         this.ydim = ydim;
-        this.visibleXdim = xdim;
-        this.visibleYdim = ydim;
         this.chars = new char[xdim][ydim];
         this.fronts = new CSIColor[xdim][ydim];
         this.backs = new CSIColor[xdim][ydim];
@@ -76,15 +71,15 @@ public class WSwingConsoleInterface {
                 f.setResizable(true);
 
                 ConsolePanel p = new ConsolePanel();
-                p.setPreferredSize(new Dimension(p.getCellWidth() * WSwingConsoleInterface.this.xdim,
-                        p.getCellHeight() * WSwingConsoleInterface.this.ydim));
+                p.setPreferredSize(new Dimension(p.getDefaultCellWidth() * WSwingConsoleInterface.this.xdim,
+                        p.getDefaultCellHeight() * WSwingConsoleInterface.this.ydim));
                 p.setFocusable(true);
 
-                // Handle window resize events
+                // Repaint on resize so font scales to fit
                 p.addComponentListener(new ComponentAdapter() {
                     @Override
                     public void componentResized(ComponentEvent e) {
-                        updateVisibleDimensions(p);
+                        p.repaint();
                     }
                 });
 
@@ -363,63 +358,80 @@ public class WSwingConsoleInterface {
         }
     }
 
-    private void updateVisibleDimensions(ConsolePanel panel) {
-        Dimension size = panel.getSize();
-        int cellWidth = panel.getCellWidth();
-        int cellHeight = panel.getCellHeight();
-        
-        // Account for scrollbar width/height
-        int newVisibleX = Math.max(1, (size.width - 20) / cellWidth);
-        int newVisibleY = Math.max(1, (size.height - 20) / cellHeight);
-        
-        // Cap at the actual grid size
-        visibleXdim = Math.min(newVisibleX, xdim);
-        visibleYdim = Math.min(newVisibleY, ydim);
-    }
-
     private final class ConsolePanel extends JPanel {
-        private final Font font = new Font(Font.MONOSPACED, Font.PLAIN, 16);
-        private final int cellWidth;
-        private final int cellHeight;
+        private static final int BASE_FONT_SIZE = 16;
+        private final Font baseFont = new Font(Font.MONOSPACED, Font.PLAIN, BASE_FONT_SIZE);
+        private final int defaultCellWidth;
+        private final int defaultCellHeight;
 
         private ConsolePanel() {
             BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
             Graphics g = img.getGraphics();
-            g.setFont(font);
+            g.setFont(baseFont);
             FontMetrics fm = g.getFontMetrics();
-            cellWidth = fm.charWidth('W');
-            cellHeight = fm.getHeight();
+            defaultCellWidth = fm.charWidth('W');
+            defaultCellHeight = fm.getHeight();
             g.dispose();
         }
 
-        private int getCellWidth() {
-            return cellWidth;
+        private int getDefaultCellWidth() {
+            return defaultCellWidth;
         }
 
-        private int getCellHeight() {
-            return cellHeight;
+        private int getDefaultCellHeight() {
+            return defaultCellHeight;
+        }
+
+        /** Find the largest font size where characters fit within targetW x targetH per cell. */
+        private Font scaledFont(int targetW, int targetH) {
+            // Use binary search over font size
+            BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+            Graphics g = img.getGraphics();
+            int lo = 1, hi = Math.max(targetH, 8) * 2, best = 1;
+            while (lo <= hi) {
+                int mid = (lo + hi) / 2;
+                Font f = new Font(Font.MONOSPACED, Font.PLAIN, mid);
+                g.setFont(f);
+                FontMetrics fm = g.getFontMetrics();
+                if (fm.charWidth('W') <= targetW && fm.getHeight() <= targetH) {
+                    best = mid;
+                    lo = mid + 1;
+                } else {
+                    hi = mid - 1;
+                }
+            }
+            g.dispose();
+            return new Font(Font.MONOSPACED, Font.PLAIN, best);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            g.setFont(font);
 
+            int panelW = getWidth();
+            int panelH = getHeight();
+
+            // Compute cell size that fills the whole panel
+            int targetCellW = panelW / xdim;
+            int targetCellH = panelH / ydim;
+
+            Font font = scaledFont(targetCellW, targetCellH);
+            g.setFont(font);
             FontMetrics fm = g.getFontMetrics();
+            int cellW = fm.charWidth('W');
+            int cellH = fm.getHeight();
             int baselineAdjust = fm.getAscent();
-            int renderWidth = Math.min(visibleXdim, xdim);
-            int renderHeight = Math.min(visibleYdim, ydim);
-            
-            for (int x = 0; x < renderWidth; x++) {
-                for (int y = 0; y < renderHeight; y++) {
+
+            for (int x = 0; x < xdim; x++) {
+                for (int y = 0; y < ydim; y++) {
                     CSIColor back = backs[x][y];
                     CSIColor front = fronts[x][y];
 
                     g.setColor(new Color(back.getR(), back.getG(), back.getB()));
-                    g.fillRect(x * cellWidth, y * cellHeight, cellWidth, cellHeight);
+                    g.fillRect(x * cellW, y * cellH, cellW, cellH);
 
                     g.setColor(new Color(front.getR(), front.getG(), front.getB()));
-                    g.drawString(String.valueOf(chars[x][y]), x * cellWidth, (y * cellHeight) + baselineAdjust);
+                    g.drawString(String.valueOf(chars[x][y]), x * cellW, (y * cellH) + baselineAdjust);
                 }
             }
         }
