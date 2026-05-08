@@ -1,13 +1,4 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package my.quarker;
-
-/**
- *
- * @author ehoward
- */
 public class DebugObject extends BaseObject {
     public static final DebugObject DEFAULT = new DebugObject();
 

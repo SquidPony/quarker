@@ -2,7 +2,7 @@ package my.quarker;
 
 public class StairsObject extends TerrainObject {
 
-    boolean down = true; //if it's an up stair, this will be false
+    boolean down = true;
 
     public StairsObject() {
         this(true);

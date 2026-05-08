@@ -1,16 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package my.quarker;
 
 import java.io.*;
 import net.slashie.libjcsi.*;
-
-/**
- *
- * @author Eben
- */
 public class BaseObject implements Cloneable{
 
     protected String myName;
@@ -20,9 +11,9 @@ public class BaseObject implements Cloneable{
     protected double visible = 0;
     protected static final CSIColor DEFAULT_FRONT_COLOR = CSIColor.WHITE,  DEFAULT_BACK_COLOR = CSIColor.BLACK;
     protected int sizeUsed;
-    protected static final int MINIMUM = 1, SMALL = 25, MEDIUM = 50, LARGE = 75, MAXIMUM = 100; //guidlines for object size in spaces
+    protected static final int MINIMUM = 1, SMALL = 25, MEDIUM = 50, LARGE = 75, MAXIMUM = 100;
 
-    public BaseObject() { //default is creating a basic wall
+    public BaseObject() {
         this("unknown", '?', false, DEFAULT_FRONT_COLOR);
     }
 
@@ -51,23 +42,15 @@ public class BaseObject implements Cloneable{
         this.backColor = obj.backColor;
         this.sizeUsed = obj.sizeUsed;
     }
-    /*
-     *This should be overridden by inheriting classes in order to provide additional output 
-     * to the save file
-     */
     String additionalOutput() {
         return "";
     }
 
-    /*
-     *This should be overridden by inheriting classes in order to provide additional output 
-     * to the save file
-     */
     String classNameOutput() {
         return "GameObject";
     }
 
-    public String outputObjectToFile() {// this should be overridden to ensure everything is saved correctly
+    public String outputObjectToFile() {
         String ret = "";
         String eol = System.getProperty("line.separator");
         ret = classNameOutput() + eol + myName + eol + represent + eol + String.valueOf(passable) + eol + frontColor.getColor() + eol + String.valueOf(visible) + eol + eol;
@@ -75,11 +58,7 @@ public class BaseObject implements Cloneable{
         return ret;
     }
 
-    /*
-     *This should be overridden by inheriting classes in order to provide additional input 
-     * from the save file
-     */
-    void additionalInput(BufferedReader reader) throws IOException {//doesn't do anything in the base class
+    void additionalInput(BufferedReader reader) throws IOException {
     }
 
     public void inputObjectFromFile(BufferedReader reader) throws IOException {

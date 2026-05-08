@@ -1,11 +1,6 @@
 package my.quarker;
 
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author Eben Howard
- */
 public class GluonObject extends ItemObject {
 
     public GluonObject(){

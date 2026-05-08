@@ -1,15 +1,6 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package my.quarker;
 
 import net.slashie.libjcsi.CSIColor;
-
-/**
- *
- * @author ehoward
- */
 public class PlayerObject extends MonsterObject {
     private int maxHp = 40;
     private int size = 1;

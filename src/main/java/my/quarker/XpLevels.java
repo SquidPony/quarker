@@ -1,16 +1,7 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package my.quarker;
 
 import java.io.*;
 import java.util.LinkedList;
-
-/**
- *
- * @author ehoward
- */
 public class XpLevels {
 
     public LinkedList<Integer> levels = new LinkedList<Integer>();
@@ -18,7 +9,7 @@ public class XpLevels {
     public XpLevels() {
         int x = 0;
         for (int i = 1; i < 50; i++) {
-            x += (i * i * i) + 15;  //xp formula
+            x += (i * i * i) + 15;
             levels.add((Integer) x);
         }
     }
