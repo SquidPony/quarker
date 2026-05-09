@@ -1,6 +1,7 @@
 SHELL := /usr/bin/env bash
 
 MAIN_CLASS := my.quarker.Quarker
+APP_NAME := Quarker
 SRC_DIR := src/main/java
 RES_DIR := src/main/resources
 
@@ -9,6 +10,8 @@ CLASSES_DIR := $(BUILD_DIR)/classes
 RES_BUILD_DIR := $(BUILD_DIR)/resources
 DIST_ROOT := $(BUILD_DIR)/dist
 ARTIFACTS_DIR := $(BUILD_DIR)/artifacts
+NATIVE_ROOT := $(BUILD_DIR)/native
+WIN_JPACKAGE ?= jpackage.exe
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo local)
 override VERSION := $(subst /,-,$(VERSION))
@@ -19,7 +22,7 @@ JAR_PATH := $(DIST_DIR)/$(JAR_NAME)
 
 JAVA_FILES := $(shell find $(SRC_DIR) -name '*.java' | sort)
 
-.PHONY: help clean build run jar package release-artifacts
+.PHONY: help clean build run jar package package-all package-native package-native-current package-native-linux package-native-macos package-native-windows package-native-wsl release-artifacts
 
 help:
 	@echo "Targets:"
@@ -27,6 +30,11 @@ help:
 	@echo "  make run              Build and run the game locally"
 	@echo "  make jar              Build runnable JAR"
 	@echo "  make package          Build ZIP and TAR.GZ release bundles"
+	@echo "  make package-all      Build release bundles + native executable(s)"
+	@echo "  make package-native   Build native executable(s) for this environment"
+	@echo "  make package-native-linux    Build Linux app image"
+	@echo "  make package-native-macos    Build macOS app image"
+	@echo "  make package-native-windows  Build Windows app image"
 	@echo "  make release-artifacts Alias for package"
 	@echo "  make clean            Remove build output"
 
@@ -61,5 +69,91 @@ package: jar
 	printf "Quarker\n\nRun:\n  java -jar quarker.jar\n\nNotes:\n  Requires Java 25 or newer.\n" > "$(DIST_DIR)/README.txt"
 	cd "$(DIST_ROOT)" && zip -rq "../artifacts/$(DIST_NAME).zip" "$(DIST_NAME)"
 	cd "$(DIST_ROOT)" && tar -czf "../artifacts/$(DIST_NAME).tar.gz" "$(DIST_NAME)"
+
+package-all: package package-native
+
+package-native: jar
+	@if grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null; then \
+	  $(MAKE) package-native-wsl VERSION="$(VERSION)"; \
+	else \
+	  $(MAKE) package-native-current VERSION="$(VERSION)"; \
+	fi
+
+package-native-current: jar
+	@platform=""; \
+	case "$$(uname -s 2>/dev/null || echo $$OS)" in \
+	  Darwin*) platform="package-native-macos" ;; \
+	  Linux*) platform="package-native-linux" ;; \
+	  MINGW*|MSYS*|CYGWIN*|Windows_NT) platform="package-native-windows" ;; \
+	  *) echo "Unsupported OS for native packaging."; exit 1 ;; \
+	esac; \
+	$(MAKE) "$$platform" VERSION="$(VERSION)"
+
+package-native-linux: jar
+	@out_dir="$(NATIVE_ROOT)/linux"; \
+	rm -rf "$$out_dir"; \
+	mkdir -p "$$out_dir"; \
+	jpackage \
+	  --type app-image \
+	  --name "$(APP_NAME)" \
+	  --dest "$$out_dir" \
+	  --input "$(DIST_DIR)" \
+	  --main-jar "$(JAR_NAME)" \
+	  --main-class "$(MAIN_CLASS)"; \
+	echo "Native app image created in $$out_dir"
+
+package-native-macos: jar
+	@out_dir="$(NATIVE_ROOT)/macos"; \
+	rm -rf "$$out_dir"; \
+	mkdir -p "$$out_dir"; \
+	jpackage \
+	  --type app-image \
+	  --name "$(APP_NAME)" \
+	  --dest "$$out_dir" \
+	  --input "$(DIST_DIR)" \
+	  --main-jar "$(JAR_NAME)" \
+	  --main-class "$(MAIN_CLASS)"; \
+	echo "Native app image created in $$out_dir"
+
+package-native-windows: jar
+	@if grep -qiE "(microsoft|wsl)" /proc/version 2>/dev/null; then \
+	  command -v "$(WIN_JPACKAGE)" >/dev/null 2>&1 || { echo "$(WIN_JPACKAGE) not found; cannot build Windows app image from WSL."; exit 1; }; \
+	  dist_input="$$(wslpath -w "$(DIST_DIR)")"; \
+	  out_dir_wsl="$(NATIVE_ROOT)/windows"; \
+	  out_dir_win="$$(wslpath -w "$$out_dir_wsl")"; \
+	  rm -rf "$$out_dir_wsl"; \
+	  mkdir -p "$$out_dir_wsl"; \
+	  "$(WIN_JPACKAGE)" \
+	    --type app-image \
+	    --name "$(APP_NAME)" \
+	    --dest "$$out_dir_win" \
+	    --input "$$dist_input" \
+	    --main-jar "$(JAR_NAME)" \
+	    --main-class "$(MAIN_CLASS)"; \
+	  echo "Windows app image created in $$out_dir_wsl"; \
+	else \
+	  out_dir="$(NATIVE_ROOT)/windows"; \
+	rm -rf "$$out_dir"; \
+	mkdir -p "$$out_dir"; \
+	jpackage \
+	  --type app-image \
+	  --name "$(APP_NAME)" \
+	  --dest "$$out_dir" \
+	  --input "$(DIST_DIR)" \
+	  --main-jar "$(JAR_NAME)" \
+	  --main-class "$(MAIN_CLASS)"; \
+	  echo "Windows app image created in $$out_dir"; \
+	fi
+
+package-native-wsl: jar
+	@echo "WSL detected: building Linux app image..."; \
+	$(MAKE) package-native-linux VERSION="$(VERSION)"; \
+	if command -v "$(WIN_JPACKAGE)" >/dev/null 2>&1; then \
+	  echo "WSL detected: building Windows app image via $(WIN_JPACKAGE)..."; \
+	  $(MAKE) package-native-windows VERSION="$(VERSION)"; \
+	else \
+	  echo "Skipping Windows app image in WSL: $(WIN_JPACKAGE) not found in PATH."; \
+	  echo "Install or expose Windows JDK jpackage.exe to PATH to enable it."; \
+	fi
 
 release-artifacts: package

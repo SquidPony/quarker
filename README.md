@@ -42,6 +42,23 @@ Package release artifacts:
 make package
 ```
 
+Build release bundles plus native executable app image(s):
+
+```bash
+make package-all
+```
+
+Build a native executable app image for your current OS:
+
+```bash
+make package-native
+```
+
+The generated executables are placed under `build/native/<platform>/`.
+
+WSL note:
+- On WSL, `make package-native` builds Linux output and also tries Windows output if `jpackage.exe` is available on `PATH`.
+
 ## How To Play
 
 Goal:

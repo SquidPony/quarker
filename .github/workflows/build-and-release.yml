@@ -111,11 +111,52 @@ jobs:
           name: quarker-${{ needs.version.outputs.build_version }}
           path: build/artifacts/*
 
+  native-build:
+    needs: version
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos
+          - os: windows-latest
+            platform: windows
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Install make (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: choco install make -y
+
+      - name: Build native app image
+        shell: bash
+        run: |
+          make clean jar package-native VERSION="${{ needs.version.outputs.build_version }}"
+
+      - name: Upload native app image
+        uses: actions/upload-artifact@v4
+        with:
+          name: quarker-${{ needs.version.outputs.build_version }}-native-${{ matrix.platform }}
+          path: build/native/${{ matrix.platform }}/**
+
   release:
     if: needs.version.outputs.should_release == 'true'
     needs:
       - version
       - build
+      - native-build
     runs-on: ubuntu-latest
 
     steps:
@@ -136,6 +177,31 @@ jobs:
         with:
           name: quarker-${{ needs.version.outputs.release_tag }}
           path: build/artifacts
+
+      - name: Download native artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: quarker-${{ needs.version.outputs.release_tag }}-native-*
+          path: build/native
+
+      - name: Archive native artifacts for release
+        shell: bash
+        run: |
+          mkdir -p build/artifacts
+          for artifact_dir in build/native/quarker-${{ needs.version.outputs.release_tag }}-native-*; do
+            [[ -d "$artifact_dir" ]] || continue
+            platform="${artifact_dir##*-native-}"
+            case "$platform" in
+              windows)
+                cd "$artifact_dir"
+                zip -rq "../../../artifacts/quarker-${{ needs.version.outputs.release_tag }}-${platform}-app-image.zip" .
+                cd - >/dev/null
+                ;;
+              *)
+                tar -C "$artifact_dir" -czf "build/artifacts/quarker-${{ needs.version.outputs.release_tag }}-${platform}-app-image.tar.gz" .
+                ;;
+            esac
+          done
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
