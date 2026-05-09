@@ -188,17 +188,30 @@ jobs:
         shell: bash
         run: |
           mkdir -p build/artifacts
+          artifacts_dir="$PWD/build/artifacts"
+          tag="${{ needs.version.outputs.release_tag }}"
           for artifact_dir in build/native/quarker-${{ needs.version.outputs.release_tag }}-native-*; do
             [[ -d "$artifact_dir" ]] || continue
             platform="${artifact_dir##*-native-}"
             case "$platform" in
               windows)
-                cd "$artifact_dir"
-                zip -rq "../../../artifacts/quarker-${{ needs.version.outputs.release_tag }}-${platform}-app-image.zip" .
-                cd - >/dev/null
+                (
+                  cd "$artifact_dir"
+                  zip -rq "$artifacts_dir/quarker-${tag}-windows-x64.zip" .
+                )
+                ;;
+              macos)
+                (
+                  cd "$artifact_dir"
+                  zip -rq "$artifacts_dir/quarker-${tag}-macos-x64.zip" .
+                )
+                ;;
+              linux)
+                tar -C "$artifact_dir" -czf "$artifacts_dir/quarker-${tag}-linux-x64.tar.gz" .
                 ;;
               *)
-                tar -C "$artifact_dir" -czf "build/artifacts/quarker-${{ needs.version.outputs.release_tag }}-${platform}-app-image.tar.gz" .
+                echo "Unknown native platform artifact: $platform"
+                exit 1
                 ;;
             esac
           done
@@ -211,9 +224,9 @@ jobs:
           required=(
             "build/artifacts/quarker-${tag}.zip"
             "build/artifacts/quarker-${tag}.tar.gz"
-            "build/artifacts/quarker-${tag}-linux-app-image.tar.gz"
-            "build/artifacts/quarker-${tag}-macos-app-image.tar.gz"
-            "build/artifacts/quarker-${tag}-windows-app-image.zip"
+            "build/artifacts/quarker-${tag}-linux-x64.tar.gz"
+            "build/artifacts/quarker-${tag}-macos-x64.zip"
+            "build/artifacts/quarker-${tag}-windows-x64.zip"
           )
 
           missing=0
