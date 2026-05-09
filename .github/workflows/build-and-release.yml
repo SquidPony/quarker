@@ -203,6 +203,34 @@ jobs:
             esac
           done
 
+      - name: Verify release artifact coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ needs.version.outputs.release_tag }}"
+          required=(
+            "build/artifacts/quarker-${tag}.zip"
+            "build/artifacts/quarker-${tag}.tar.gz"
+            "build/artifacts/quarker-${tag}-linux-app-image.tar.gz"
+            "build/artifacts/quarker-${tag}-macos-app-image.tar.gz"
+            "build/artifacts/quarker-${tag}-windows-app-image.zip"
+          )
+
+          missing=0
+          for f in "${required[@]}"; do
+            if [[ ! -f "$f" ]]; then
+              echo "Missing required artifact: $f"
+              missing=1
+            fi
+          done
+
+          if [[ "$missing" -ne 0 ]]; then
+            echo "Release aborted: one or more required platform artifacts are missing."
+            exit 1
+          fi
+
+          echo "All required release artifacts are present."
+
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
