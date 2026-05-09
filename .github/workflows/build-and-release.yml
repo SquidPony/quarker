@@ -222,8 +222,8 @@ jobs:
           set -euo pipefail
           tag="${{ needs.version.outputs.release_tag }}"
           required=(
-            "build/artifacts/quarker-${tag}.zip"
-            "build/artifacts/quarker-${tag}.tar.gz"
+            "build/artifacts/quarker-${tag}-universal.zip"
+            "build/artifacts/quarker-${tag}-universal.tar.gz"
             "build/artifacts/quarker-${tag}-linux-x64.tar.gz"
             "build/artifacts/quarker-${tag}-macos-x64.zip"
             "build/artifacts/quarker-${tag}-windows-x64.zip"

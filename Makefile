@@ -67,8 +67,8 @@ jar: build
 package: jar
 	mkdir -p $(ARTIFACTS_DIR)
 	printf "Quarker\n\nRun:\n  java -jar quarker.jar\n\nNotes:\n  Requires Java 25 or newer.\n" > "$(DIST_DIR)/README.txt"
-	cd "$(DIST_ROOT)" && zip -rq "../artifacts/$(DIST_NAME).zip" "$(DIST_NAME)"
-	cd "$(DIST_ROOT)" && tar -czf "../artifacts/$(DIST_NAME).tar.gz" "$(DIST_NAME)"
+	cd "$(DIST_ROOT)" && zip -rq "../artifacts/quarker-$(VERSION)-universal.zip" "$(DIST_NAME)"
+	cd "$(DIST_ROOT)" && tar -czf "../artifacts/quarker-$(VERSION)-universal.tar.gz" "$(DIST_NAME)"
 
 package-all: package package-native
 

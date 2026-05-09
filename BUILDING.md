@@ -25,8 +25,8 @@
 Artifacts are written to:
 
 - `build/dist/quarker-<version>/quarker.jar`
-- `build/artifacts/quarker-<version>.zip`
-- `build/artifacts/quarker-<version>.tar.gz`
+- `build/artifacts/quarker-<version>-universal.zip`
+- `build/artifacts/quarker-<version>-universal.tar.gz`
 - `build/native/<platform>/...` (native app image)
 
 ### WSL behavior
