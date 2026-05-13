@@ -100,6 +100,7 @@ Actions:
 - `p` save screenshot and print saved path.
 - `P` save screenshot silently (no message).
 - `V` start/stop turn recording; stopping exports an animated GIF.
+- `N` starts a new run immediately (restart).
 - `?` help (currently placeholder).
 - `Esc` exits the game.
 

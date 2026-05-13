@@ -56,13 +56,44 @@ public class Workhorse {
         }
         mainInterface = new WSwingConsoleInterface("Quarker");
 
+        boolean firstRun = true;
+        while (true) {
+            startRun(firstRun);
+            firstRun = false;
+            try {
+                playerTurn();
+            } catch (GameRestartSignal ignored) {
+                running = true;
+                continue;
+            } catch (GameExitedSignal ignored) {
+                running = false;
+                break;
+            }
+        }
+    }
+
+    private void startRun(boolean firstRun) {
+        String preservedName = firstRun ? "" : player.myName;
+        mapLevel = 1;
+        recurseNumber = 0;
+        currentLoc = new GridPoint((mapSizeX / 2), (mapSizeY / 2));
+        mapContents = new MapObject[mapSizeX][mapSizeY];
+        player = new PlayerObject();
+
         initEverything();
         mainInterface.refresh();
-        initializePlayer();
-        try {
-            playerTurn();
-        } catch (GameExitedSignal ignored) {
-            running = false;
+
+        if (!firstRun && preservedName != null && !preservedName.isBlank()) {
+            player.myName = preservedName;
+            player.initialize();
+            cleanDisplay();
+            displayMap();
+            tellPlayer("New run started.");
+            if (webMode) {
+                tellPlayer("Web build active: save/load, screenshots, and recording are disabled.");
+            }
+        } else {
+            initializePlayer();
         }
     }
 
@@ -196,6 +227,9 @@ public class Workhorse {
             case CharKey.R:
                 loadGame();
                 break;
+            case CharKey.CAPITAL_N:
+                restartGame();
+                break;
             case CharKey.L:
                 lookAround();
                 break;
@@ -289,9 +323,15 @@ public class Workhorse {
 
     private void leaving(String args) {
         finalizeRecordingBeforeExit();
-        askPlayer(2, args + "Thanks for playing.  Press Enter to exit now.");
+        askPlayer(2, args + "Thanks for playing.  Press Enter to exit now (or N while playing to restart). ");
         running = false;
         throw new GameExitedSignal();
+    }
+
+    private void restartGame() {
+        finalizeRecordingBeforeExit();
+        running = false;
+        throw new GameRestartSignal();
     }
 
     private void checkStats() {
@@ -355,6 +395,9 @@ public class Workhorse {
                     break;
                 case CharKey.R:
                     loadGame();
+                    break;
+                case CharKey.CAPITAL_N:
+                    restartGame();
                     break;
                 case CharKey.ENTER:
                     tellPlayer(mapContents[tempLoc.x][tempLoc.y].getTopObjectName());
@@ -1028,6 +1071,10 @@ public class Workhorse {
     }
 
     private static final class GameExitedSignal extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+    }
+
+    private static final class GameRestartSignal extends RuntimeException {
         private static final long serialVersionUID = 1L;
     }
 }

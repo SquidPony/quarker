@@ -11,6 +11,7 @@ public class CharKey {
     public static final int P = 'p';
     public static final int CAPITAL_P = 'P';
     public static final int R = 'r';
+    public static final int CAPITAL_N = 'N';
     public static final int L = 'l';
     public static final int B = 'b';
     public static final int V = 'v';

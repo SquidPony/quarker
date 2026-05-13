@@ -272,6 +272,8 @@ public class WSwingConsoleInterface {
             + "target.addEventListener('keydown', function(e){"
             + "var key = e.key || '';"
             + "if (!key) { return; }"
+            + "var isReload = key === 'F5' || ((e.ctrlKey || e.metaKey) && (key === 'r' || key === 'R'));"
+            + "if (isReload) { return; }"
             + "root.__quarkerInputQueue.push(key);"
             + "e.preventDefault();"
             + "});"
