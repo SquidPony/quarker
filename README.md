@@ -42,6 +42,18 @@ Package release artifacts:
 make package
 ```
 
+Build the browser bundle (TeaVM, self-hosted):
+
+```bash
+make web
+```
+
+Run the browser bundle locally:
+
+```bash
+make web-serve
+```
+
 Build release bundles plus native executable app image(s):
 
 ```bash
@@ -55,6 +67,13 @@ make package-native
 ```
 
 The generated executables are placed under `build/native/<platform>/`.
+The generated web bundle is placed under `build/web/quarker-<version>/`.
+
+Web build notes:
+- The browser target is built with [TeaVM](https://www.teavm.org/), an Apache-2.0 open-source compiler/runtime.
+- `make web` bootstraps a local Maven binary under `build/tools/` automatically.
+- The local web server binds only to `127.0.0.1` and disables directory listing.
+- Save/load, screenshots, and recording are disabled in the web runtime.
 
 WSL note:
 - On WSL, `make package-native` builds Linux output and also tries Windows output if `jpackage.exe` is available on `PATH`.

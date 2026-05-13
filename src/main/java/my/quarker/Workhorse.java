@@ -1,6 +1,5 @@
 package my.quarker;
 
-import java.awt.Point;
 import java.util.ArrayList;
 import java.util.Random;
 import net.slashie.libjcsi.*;
@@ -9,7 +8,8 @@ import net.slashie.libjcsi.wswing.*;
 
 public class Workhorse {
 
-    private String versionNumber = loadVersion();
+    private String versionNumber = "unknown";
+    private final boolean webMode;
 
     private static String loadVersion() {
         try (java.io.InputStream is = Workhorse.class.getClassLoader().getResourceAsStream("version.properties")) {
@@ -33,12 +33,12 @@ public class Workhorse {
     private int recurseNumber = 0;
     private int maxRecurse = 150;
     private MapObject[][] mapContents = new MapObject[mapSizeX][mapSizeY];
-    private Point currentLoc = new Point((mapSizeX / 2), (mapSizeY / 2));
+    private GridPoint currentLoc = new GridPoint((mapSizeX / 2), (mapSizeY / 2));
     private XpLevels quarkLevels = new XpLevels();
     private PlayerObject player = new PlayerObject();
     private ArrayList<CSIColor> colorList = new ArrayList<CSIColor>();
     private volatile boolean recordingActive = false;
-    private String eol = System.getProperty("line.separator");
+    private boolean running = true;
     static final private int[][] FOV_MULTIPLIER = {
         {1, 0, 0, -1, -1, 0, 0, 1},
         {0, 1, -1, 0, 0, -1, 1, 0},
@@ -46,25 +46,24 @@ public class Workhorse {
         {1, 0, 0, 1, -1, 0, 0, -1},};
 
     public Workhorse() {
-        try {
-            mainInterface = new WSwingConsoleInterface("Quarker");
-        } catch (ExceptionInInitializerError eiie) {
-            System.out.println("Fatal Error Initializing Swing Console Box");
-            eiie.printStackTrace();
-            System.exit(-1);
-        }
+        this(false);
+    }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (!recordingActive) {
-                return;
-            }
-            mainInterface.finalizeRecordingOnShutdown("screenshots");
-        }, "quarker-recording-shutdown"));
+    public Workhorse(boolean webMode) {
+        this.webMode = webMode;
+        if (!webMode) {
+            versionNumber = loadVersion();
+        }
+        mainInterface = new WSwingConsoleInterface("Quarker");
 
         initEverything();
         mainInterface.refresh();
         initializePlayer();
-        playerTurn();
+        try {
+            playerTurn();
+        } catch (GameExitedSignal ignored) {
+            running = false;
+        }
     }
 
     public String askPlayer(int lines, String question, CSIColor color) {
@@ -121,11 +120,11 @@ public class Workhorse {
 
         CharKey actionKey = new CharKey();
 
-        do {
+        while (running) {
             actionKey = mainInterface.inkey();
             infoBox.clear();
             takeAction(actionKey);
-        } while (true);
+        }
     }
 
     private void runTurn() {
@@ -291,7 +290,8 @@ public class Workhorse {
     private void leaving(String args) {
         finalizeRecordingBeforeExit();
         askPlayer(2, args + "Thanks for playing.  Press Enter to exit now.");
-        System.exit(0);
+        running = false;
+        throw new GameExitedSignal();
     }
 
     private void checkStats() {
@@ -308,36 +308,36 @@ public class Workhorse {
     private void lookAround() {
         CharKey actionKey = new CharKey();
         BaseObject cursor = new BaseObject("cursor", '?', true);
-        Point cursorLoc = new Point(currentLoc.x, currentLoc.y);
+        GridPoint cursorLoc = new GridPoint(currentLoc.x, currentLoc.y);
 
-        do {
+        while (running) {
             actionKey = mainInterface.inkey();
             infoBox.clear();
             cursorLoc = doLooking(actionKey, cursorLoc);
             displayMap();
             mainInterface.print(cursorLoc.x, cursorLoc.y + infoSpace, cursor.represent, CSIColor.AMBER);
-        } while (true);
+        }
     }
 
-    private Point doLooking(CharKey thisKey, Point current) {
-        Point tempLoc = current;
+    private GridPoint doLooking(CharKey thisKey, GridPoint current) {
+        GridPoint tempLoc = current;
         if (thisKey.isArrow()) {
             if (thisKey.isUpArrow()) {
-                tempLoc = new Point(current.x, current.y - 1);
+                tempLoc = new GridPoint(current.x, current.y - 1);
             } else if (thisKey.isUpRightArrow()) {
-                tempLoc = new Point(current.x + 1, current.y - 1);
+                tempLoc = new GridPoint(current.x + 1, current.y - 1);
             } else if (thisKey.isRightArrow()) {
-                tempLoc = new Point(current.x + 1, current.y);
+                tempLoc = new GridPoint(current.x + 1, current.y);
             } else if (thisKey.isDownRightArrow()) {
-                tempLoc = new Point(current.x + 1, current.y + 1);
+                tempLoc = new GridPoint(current.x + 1, current.y + 1);
             } else if (thisKey.isDownArrow()) {
-                tempLoc = new Point(current.x, current.y + 1);
+                tempLoc = new GridPoint(current.x, current.y + 1);
             } else if (thisKey.isDownLeftArrow()) {
-                tempLoc = new Point(current.x - 1, current.y + 1);
+                tempLoc = new GridPoint(current.x - 1, current.y + 1);
             } else if (thisKey.isLeftArrow()) {
-                tempLoc = new Point(current.x - 1, current.y);
+                tempLoc = new GridPoint(current.x - 1, current.y);
             } else if (thisKey.isUpLeftArrow()) {
-                tempLoc = new Point(current.x - 1, current.y - 1);
+                tempLoc = new GridPoint(current.x - 1, current.y - 1);
             }
         } else {
             switch (thisKey.code) {
@@ -676,7 +676,7 @@ public class Workhorse {
         new Workhorse();
     }
 
-    private void chaosMapping(Point start) {
+    private void chaosMapping(GridPoint start) {
 
         CSIColor tempColor;
         if (recurseNumber > maxRecurse) {
@@ -693,7 +693,7 @@ public class Workhorse {
         recurseNumber++;
         i = i + 1 - rng.nextInt(3);
         k = k + 1 - rng.nextInt(3);
-        chaosMapping(new Point(i, k));
+        chaosMapping(new GridPoint(i, k));
     }
 
     private void creaturePlacement() {
@@ -826,7 +826,7 @@ public class Workhorse {
             blockX = rng.nextInt(mapSizeX);
             blockY = rng.nextInt(mapSizeY);
             recurseNumber = 0;
-            chaosMapping(new Point(blockX, blockY));
+            chaosMapping(new GridPoint(blockX, blockY));
         }
         for (int i = 0; i < mapSizeX; i++) {
             mapContents[i][0].setFlooring(new FoldObject(new CSIColor((rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30), (rng.nextInt(100) + rng.nextInt(100) + 30))));
@@ -861,17 +861,32 @@ public class Workhorse {
     }
 
     private void initializePlayer() {
-        player.myName = askPlayer(1, "Please enter the particle's name. ");
+        if (webMode) {
+            player.myName = "Web Particle";
+        } else {
+            player.myName = askPlayer(1, "Please enter the particle's name. ");
+        }
         player.initialize();
         cleanDisplay();
         displayMap();
+        if (webMode) {
+            tellPlayer("Web build active: save/load, screenshots, and recording are disabled.");
+        }
     }
 
     private void saveGame() {
+        if (webMode) {
+            tellPlayer("Saving is not available in the web build.");
+            return;
+        }
         tellPlayer("Saving is currently disabled.");
     }
 
     private void takeScreenshot() {
+        if (webMode) {
+            tellPlayer("Screenshots are disabled in the web build.");
+            return;
+        }
         try {
             String path = mainInterface.saveScreenshot("screenshots");
             tellPlayer("Screenshot saved: " + path);
@@ -881,6 +896,9 @@ public class Workhorse {
     }
 
     private void takeScreenshotSilent() {
+        if (webMode) {
+            return;
+        }
         try {
             mainInterface.saveScreenshot("screenshots");
         } catch (RuntimeException e) {
@@ -889,6 +907,10 @@ public class Workhorse {
     }
 
     private void toggleRecording() {
+        if (webMode) {
+            tellPlayer("Recording is disabled in the web build.");
+            return;
+        }
         if (!recordingActive) {
             try {
                 String path = mainInterface.startRecording("screenshots");
@@ -915,6 +937,9 @@ public class Workhorse {
     }
 
     private void finalizeRecordingBeforeExit() {
+        if (webMode) {
+            return;
+        }
         if (!recordingActive) {
             return;
         }
@@ -938,6 +963,9 @@ public class Workhorse {
     }
 
     private void handlePendingRecordingRecoveryOnLoad() {
+        if (webMode) {
+            return;
+        }
         if (!mainInterface.hasPendingRecordingFrames("screenshots")) {
             return;
         }
@@ -976,7 +1004,30 @@ public class Workhorse {
     }
 
     private void loadGame() {
+        if (webMode) {
+            tellPlayer("Loading is not available in the web build.");
+            return;
+        }
         handlePendingRecordingRecoveryOnLoad();
         tellPlayer("Loading currently disabled.");
+    }
+
+    private static final class GridPoint {
+        int x;
+        int y;
+
+        GridPoint(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+
+        void move(int x, int y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
+
+    private static final class GameExitedSignal extends RuntimeException {
+        private static final long serialVersionUID = 1L;
     }
 }

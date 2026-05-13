@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>Quarker Web</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="assets/quarker.js"></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">Open Source Web Build</p>
+        <h1>Quarker</h1>
+        <p class="lede">Self-hosted browser runtime generated with TeaVM.</p>
+        <p id="status" class="status">Preparing...</p>
+      </header>
+      <section class="console-wrap" aria-label="Quarker game screen">
+        <pre id="quarker-screen" class="console"></pre>
+      </section>
+      <p class="note">Input is command-based in this browser build. Use vi keys (h j k l y u b n), ., &lt;, &gt;, s, p, V, and esc.</p>
+    </main>
+  </body>
+</html>
