@@ -13,6 +13,12 @@
   - `make run`
 - Build a runnable JAR + release bundles:
   - `make package`
+- Build the browser bundle:
+  - `make web`
+- Serve the browser bundle locally with an HTTP Range-capable server:
+  - `make web-serve`
+- Archive the browser bundle for distribution:
+  - `make package-web`
 - Build release bundles + native executable app image(s):
   - `make package-all`
 - Build an OS-native executable app image (macOS/Linux/Windows, on that OS):
@@ -25,9 +31,18 @@
 Artifacts are written to:
 
 - `build/dist/quarker-<version>/quarker.jar`
+- `build/web/quarker-<version>/`
 - `build/artifacts/quarker-<version>-universal.zip`
 - `build/artifacts/quarker-<version>-universal.tar.gz`
+- `build/artifacts/quarker-<version>-web.zip`
 - `build/native/<platform>/...` (native app image)
+
+### Browser build behavior
+
+- `make web` compiles Java sources with `javac --release 17` for CheerpJ compatibility.
+- `make web-serve` binds only to `127.0.0.1` and supports HTTP Range requests, which CheerpJ requires to read the JAR efficiently.
+- The browser build disables save/load, screenshots, and recording because those desktop-oriented file operations are not exposed in the hosted runtime.
+- The generated page uses a restrictive Content Security Policy that only allows the local bundle and the pinned CheerpJ runtime origin.
 
 ### WSL behavior
 

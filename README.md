@@ -42,6 +42,18 @@ Package release artifacts:
 make package
 ```
 
+Build the browser bundle:
+
+```bash
+make web
+```
+
+Serve the browser bundle locally:
+
+```bash
+make web-serve
+```
+
 Build release bundles plus native executable app image(s):
 
 ```bash
@@ -55,6 +67,13 @@ make package-native
 ```
 
 The generated executables are placed under `build/native/<platform>/`.
+The browser bundle is written to `build/web/quarker-<version>/` and can be archived with `make package-web`.
+
+Web build notes:
+- The browser target compiles the game to Java 17 bytecode for CheerpJ compatibility while the desktop build remains on Java 25.
+- The page is locked down with a restrictive CSP and the local dev server binds to `127.0.0.1` only.
+- Save/load, screenshots, and recording are intentionally disabled in the browser build.
+- The browser runtime requires a local web server with HTTP Range support, which `make web-serve` provides.
 
 WSL note:
 - On WSL, `make package-native` builds Linux output and also tries Windows output if `jpackage.exe` is available on `PATH`.

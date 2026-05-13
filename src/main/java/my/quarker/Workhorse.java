@@ -10,6 +10,7 @@ import net.slashie.libjcsi.wswing.*;
 public class Workhorse {
 
     private String versionNumber = loadVersion();
+    private final boolean webMode = Boolean.getBoolean("quarker.web");
 
     private static String loadVersion() {
         try (java.io.InputStream is = Workhorse.class.getClassLoader().getResourceAsStream("version.properties")) {
@@ -54,12 +55,14 @@ public class Workhorse {
             System.exit(-1);
         }
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            if (!recordingActive) {
-                return;
-            }
-            mainInterface.finalizeRecordingOnShutdown("screenshots");
-        }, "quarker-recording-shutdown"));
+        if (!webMode) {
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                if (!recordingActive) {
+                    return;
+                }
+                mainInterface.finalizeRecordingOnShutdown("screenshots");
+            }, "quarker-recording-shutdown"));
+        }
 
         initEverything();
         mainInterface.refresh();
@@ -861,17 +864,32 @@ public class Workhorse {
     }
 
     private void initializePlayer() {
-        player.myName = askPlayer(1, "Please enter the particle's name. ");
+        if (webMode) {
+            player.myName = "Browser Particle";
+        } else {
+            player.myName = askPlayer(1, "Please enter the particle's name. ");
+        }
         player.initialize();
         cleanDisplay();
         displayMap();
+        if (webMode) {
+            tellPlayer("Browser build active: save/load, screenshots, and recording are disabled.");
+        }
     }
 
     private void saveGame() {
+        if (webMode) {
+            tellPlayer("Saving is not available in the browser build.");
+            return;
+        }
         tellPlayer("Saving is currently disabled.");
     }
 
     private void takeScreenshot() {
+        if (webMode) {
+            tellPlayer("Screenshots are disabled in the browser build.");
+            return;
+        }
         try {
             String path = mainInterface.saveScreenshot("screenshots");
             tellPlayer("Screenshot saved: " + path);
@@ -881,6 +899,9 @@ public class Workhorse {
     }
 
     private void takeScreenshotSilent() {
+        if (webMode) {
+            return;
+        }
         try {
             mainInterface.saveScreenshot("screenshots");
         } catch (RuntimeException e) {
@@ -889,6 +910,10 @@ public class Workhorse {
     }
 
     private void toggleRecording() {
+        if (webMode) {
+            tellPlayer("Recording is disabled in the browser build.");
+            return;
+        }
         if (!recordingActive) {
             try {
                 String path = mainInterface.startRecording("screenshots");
@@ -915,6 +940,9 @@ public class Workhorse {
     }
 
     private void finalizeRecordingBeforeExit() {
+        if (webMode) {
+            return;
+        }
         if (!recordingActive) {
             return;
         }
@@ -938,6 +966,9 @@ public class Workhorse {
     }
 
     private void handlePendingRecordingRecoveryOnLoad() {
+        if (webMode) {
+            return;
+        }
         if (!mainInterface.hasPendingRecordingFrames("screenshots")) {
             return;
         }
@@ -976,6 +1007,10 @@ public class Workhorse {
     }
 
     private void loadGame() {
+        if (webMode) {
+            tellPlayer("Loading is not available in the browser build.");
+            return;
+        }
         handlePendingRecordingRecoveryOnLoad();
         tellPlayer("Loading currently disabled.");
     }

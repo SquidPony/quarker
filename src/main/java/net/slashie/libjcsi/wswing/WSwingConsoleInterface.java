@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
 import javax.imageio.ImageTypeSpecifier;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
@@ -32,7 +31,6 @@ import javax.imageio.stream.FileImageOutputStream;
 import javax.imageio.stream.ImageOutputStream;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
@@ -44,7 +42,6 @@ public class WSwingConsoleInterface {
     public final int xdim;
     public final int ydim;
 
-    private final JFrame frame;
     private final ConsolePanel panel;
     private final JTextField inputField;
     private final BlockingQueue<CharKey> keyQueue = new LinkedBlockingQueue<CharKey>();
@@ -156,9 +153,16 @@ public class WSwingConsoleInterface {
                 });
 
                 f.setLayout(new BorderLayout());
-                f.add(new JScrollPane(p), BorderLayout.CENTER);
+                f.add(p, BorderLayout.CENTER);
                 f.add(in, BorderLayout.SOUTH);
                 f.pack();
+                Dimension panelSize = p.getPreferredSize();
+                Dimension inputSize = in.getPreferredSize();
+                int minWidth = panelSize.width + 32;
+                int minHeight = panelSize.height + inputSize.height + 48;
+                if (f.getWidth() < minWidth || f.getHeight() < minHeight) {
+                    f.setSize(Math.max(f.getWidth(), minWidth), Math.max(f.getHeight(), minHeight));
+                }
                 f.setLocationRelativeTo(null);
                 f.setVisible(true);
                 p.requestFocusInWindow();
@@ -169,7 +173,6 @@ public class WSwingConsoleInterface {
             }
         });
 
-        this.frame = tmpFrame[0];
         this.panel = tmpPanel[0];
         this.inputField = tmpInput[0];
     }
