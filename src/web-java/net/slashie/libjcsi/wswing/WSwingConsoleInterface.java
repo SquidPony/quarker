@@ -240,10 +240,14 @@ public class WSwingConsoleInterface {
         return String.valueOf(new char[]{chars[(v >> 4) & 0xF], chars[v & 0xF]});
     }
 
-    @JSBody(params = "html", script = "var el = document.getElementById('quarker-screen'); if (el) el.innerHTML = html;")
+        @JSBody(params = "html", script = "var root = document.querySelector('[data-quarker-root]') || document;"
+            + "var el = root.querySelector('[data-quarker-screen]') || document.getElementById('quarker-screen');"
+            + "if (el) { el.innerHTML = html; }")
     private static native void setScreenHtml(String html);
 
-    @JSBody(params = "text", script = "var el = document.getElementById('status'); if (el) el.textContent = text;")
+        @JSBody(params = "text", script = "var root = document.querySelector('[data-quarker-root]') || document;"
+            + "var el = root.querySelector('[data-quarker-status]') || document.getElementById('status');"
+            + "if (el) { el.textContent = text; }")
     private static native void setStatus(String text);
 
     private static String readKeyToken() {
@@ -260,17 +264,27 @@ public class WSwingConsoleInterface {
         } while (true);
     }
 
-    @JSBody(script = "if (!window.__quarkerInputQueue) {"
-            + "window.__quarkerInputQueue = [];"
-            + "window.addEventListener('keydown', function(e){"
+        @JSBody(script = "var root = document.querySelector('[data-quarker-root]') || document;"
+            + "if (!root.__quarkerInputQueue) { root.__quarkerInputQueue = []; }"
+            + "if (!root.__quarkerInputBound) {"
+            + "root.__quarkerInputBound = true;"
+            + "var target = root.querySelector('.quarker-frame') || window;"
+            + "target.addEventListener('keydown', function(e){"
             + "var key = e.key || '';"
             + "if (!key) { return; }"
-            + "window.__quarkerInputQueue.push(key);"
+            + "root.__quarkerInputQueue.push(key);"
             + "e.preventDefault();"
             + "});"
+            + "if (target !== window) {"
+            + "target.addEventListener('click', function(){ if (target.focus) { target.focus(); } });"
+            + "if (target.focus) { target.focus(); }"
+            + "}"
             + "}")
     private static native void initInputQueue();
 
-    @JSBody(script = "var q = window.__quarkerInputQueue; if (!q || q.length === 0) { return ''; } return String(q.shift());")
+        @JSBody(script = "var root = document.querySelector('[data-quarker-root]') || document;"
+            + "var q = root.__quarkerInputQueue;"
+            + "if (!q || q.length === 0) { return ''; }"
+            + "return String(q.shift());")
     private static native String pollInputKey();
 }
