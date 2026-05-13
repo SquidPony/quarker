@@ -48,6 +48,12 @@ Build the browser bundle (TeaVM, self-hosted):
 make web
 ```
 
+Stage a GitHub Pages-ready bundle:
+
+```bash
+make pages
+```
+
 Run the browser bundle locally:
 
 ```bash
@@ -72,8 +78,13 @@ The generated web bundle is placed under `build/web/quarker-<version>/`.
 Web build notes:
 - The browser target is built with [TeaVM](https://www.teavm.org/), an Apache-2.0 open-source compiler/runtime.
 - `make web` bootstraps a local Maven binary under `build/tools/` automatically.
+- `make pages` copies the web bundle to `build/pages/` and adds `.nojekyll` so GitHub Pages can serve it directly.
 - The local web server binds only to `127.0.0.1` and disables directory listing.
 - Save/load, screenshots, and recording are disabled in the web runtime.
+
+GitHub Pages setup:
+- The repository includes `.github/workflows/pages.yml`, which publishes the web build on pushes to `main`.
+- In the repository settings, set Pages source to GitHub Actions if it is not already enabled.
 
 WSL note:
 - On WSL, `make package-native` builds Linux output and also tries Windows output if `jpackage.exe` is available on `PATH`.
