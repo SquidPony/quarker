@@ -1,0 +1,148 @@
+:root {
+  --background: #140b02;
+  --foreground: #ffd8a3;
+  --accent-primary: #ffb347;
+  --accent-secondary: #ff8a3d;
+  --accent-muted: #b98a52;
+  --card-bg: #1e1206;
+  --card-border: rgba(255, 179, 71, 0.22);
+  --amber-glow: rgba(255, 179, 71, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  width: 100%;
+}
+
+body {
+  background:
+    radial-gradient(1100px 600px at 70% -5%, rgba(255, 179, 71, 0.11), transparent 60%),
+    radial-gradient(900px 500px at 15% 105%, rgba(255, 138, 61, 0.08), transparent 55%),
+    var(--background);
+  color: var(--foreground);
+  font-family: "Sora", "Avenir Next", "Segoe UI", sans-serif;
+}
+
+quarker-game {
+  display: block;
+  width: 100%;
+  min-height: 100vh;
+}
+
+.quarker-shell {
+  min-height: 100vh;
+  width: 100%;
+  display: grid;
+  place-items: center;
+  padding: 0.75rem;
+}
+
+.quarker-frame {
+  position: relative;
+  width: min(100vw - 1.5rem, 1200px);
+  min-height: min(94vh, 900px);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  overflow: auto;
+  outline: none;
+  background:
+    linear-gradient(180deg, rgba(40, 23, 8, 0.75), rgba(23, 13, 5, 0.9)),
+    var(--card-bg);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 179, 71, 0.12) inset,
+    0 0 60px rgba(255, 179, 71, 0.12);
+}
+
+.quarker-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 3px,
+    rgba(0, 0, 0, 0.08) 3px,
+    rgba(0, 0, 0, 0.08) 4px
+  );
+}
+
+.quarker-frame:focus-visible {
+  border-color: rgba(255, 179, 71, 0.6);
+  box-shadow:
+    0 30px 70px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 179, 71, 0.32) inset,
+    0 0 70px rgba(255, 179, 71, 0.28);
+}
+
+.quarker-screen {
+  position: relative;
+  z-index: 1;
+  margin: 0;
+  min-width: 940px;
+  min-height: min(94vh, 900px);
+  padding: 0.9rem 1rem;
+  background: transparent;
+  color: var(--foreground);
+  font-family: "Iosevka Web", "JetBrains Mono", "Cascadia Mono", monospace;
+  font-size: 1rem;
+  line-height: 1.05;
+  font-variant-ligatures: none;
+  white-space: pre;
+  text-rendering: geometricPrecision;
+  text-shadow: 0 0 8px rgba(255, 179, 71, 0.08);
+}
+
+.quarker-status {
+  position: absolute;
+  left: 0.7rem;
+  bottom: 0.4rem;
+  z-index: 2;
+  margin: 0;
+  padding: 0.2rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 179, 71, 0.28);
+  background: rgba(22, 12, 4, 0.8);
+  color: var(--accent-muted);
+  font-size: 0.7rem;
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+  font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+  pointer-events: none;
+}
+
+@media (max-width: 760px) {
+  .quarker-shell {
+    padding: 0.5rem;
+  }
+
+  .quarker-frame {
+    width: calc(100vw - 1rem);
+    min-height: 93vh;
+    border-radius: 10px;
+  }
+
+  .quarker-screen {
+    min-width: 760px;
+    min-height: 93vh;
+    font-size: 0.85rem;
+    padding: 0.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

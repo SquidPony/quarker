@@ -13,6 +13,12 @@
   - `make run`
 - Build a runnable JAR + release bundles:
   - `make package`
+- Build browser bundle (TeaVM):
+  - `make web`
+- Serve browser bundle locally:
+  - `make web-serve`
+- Build browser ZIP artifact:
+  - `make package-web`
 - Build release bundles + native executable app image(s):
   - `make package-all`
 - Build an OS-native executable app image (macOS/Linux/Windows, on that OS):
@@ -25,9 +31,18 @@
 Artifacts are written to:
 
 - `build/dist/quarker-<version>/quarker.jar`
+- `build/web/quarker-<version>/`
 - `build/artifacts/quarker-<version>-universal.zip`
 - `build/artifacts/quarker-<version>-universal.tar.gz`
+- `build/artifacts/quarker-<version>-web.zip`
 - `build/native/<platform>/...` (native app image)
+
+### Browser build behavior
+
+- Browser assets are generated with TeaVM from Java class files compiled with `--release 17`.
+- The build bootstraps Apache Maven under `build/tools/` automatically; no global Maven install is required.
+- `web-serve` uses a localhost-only Python server and disables directory listing.
+- Save/load, screenshots, and recording are intentionally unavailable in web mode.
 
 ### WSL behavior
 
