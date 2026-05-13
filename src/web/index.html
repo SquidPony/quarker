@@ -10,17 +10,27 @@
     <script src="app.js" defer></script>
   </head>
   <body>
+    <div class="ambient" aria-hidden="true"></div>
     <main class="shell">
-      <header class="hero">
-        <p class="eyebrow">Open Source Web Build</p>
+      <header class="hero" aria-label="Quarker header">
+        <p class="brandline">~ SQUIDPONY ~</p>
         <h1>Quarker</h1>
-        <p class="lede">Self-hosted browser runtime generated with TeaVM.</p>
-        <p id="status" class="status">Preparing...</p>
+        <p class="lede">Browser edition compiled from the Java codebase with TeaVM.</p>
+        <div class="meta-row">
+          <p id="status" class="status">Preparing...</p>
+          <p class="build-tag">Open-source self-hosted build</p>
+        </div>
       </header>
-      <section class="console-wrap" aria-label="Quarker game screen">
+
+      <section class="console-panel" aria-label="Quarker game screen">
+        <div class="panel-head">
+          <span class="panel-title">Game Console</span>
+          <span class="panel-subtitle">Keyboard commands active</span>
+        </div>
         <pre id="quarker-screen" class="console"></pre>
       </section>
-      <p class="note">Input is command-based in this browser build. Use vi keys (h j k l y u b n), ., &lt;, &gt;, s, p, V, and esc.</p>
+
+      <p class="note">Controls: h j k l y u b n, ., &lt;, &gt;, s, p, V, esc</p>
     </main>
   </body>
 </html>

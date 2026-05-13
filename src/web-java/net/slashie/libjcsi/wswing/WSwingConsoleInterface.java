@@ -38,16 +38,35 @@ public class WSwingConsoleInterface {
     }
 
     public void refresh() {
-        StringBuilder screen = new StringBuilder((xdim + 1) * ydim);
+        StringBuilder screen = new StringBuilder((xdim + 1) * ydim * 3);
         for (int y = 0; y < ydim; y++) {
-            for (int x = 0; x < xdim; x++) {
-                screen.append(chars[x][y]);
+            int x = 0;
+            while (x < xdim) {
+                CSIColor fg = fronts[x][y] == null ? CSIColor.WHITE : fronts[x][y];
+                CSIColor bg = backs[x][y] == null ? CSIColor.BLACK : backs[x][y];
+                int runEnd = x + 1;
+                while (runEnd < xdim
+                        && colorsEqual(fronts[runEnd][y], fg)
+                        && colorsEqual(backs[runEnd][y], bg)) {
+                    runEnd++;
+                }
+
+                screen.append("<span style=\"color:")
+                        .append(toCssColor(fg))
+                        .append(";background:")
+                        .append(toCssColor(bg))
+                    .append("\">");
+                for (int i = x; i < runEnd; i++) {
+                    appendEscaped(screen, chars[i][y]);
+                }
+                screen.append("</span>");
+                x = runEnd;
             }
             if (y + 1 < ydim) {
                 screen.append('\n');
             }
         }
-        setScreenText(screen.toString());
+        setScreenHtml(screen.toString());
     }
 
     public void saveBuffer() {
@@ -192,8 +211,37 @@ public class WSwingConsoleInterface {
         return out;
     }
 
-    @JSBody(params = "text", script = "var el = document.getElementById('quarker-screen'); if (el) el.textContent = text;")
-    private static native void setScreenText(String text);
+    private static boolean colorsEqual(CSIColor a, CSIColor b) {
+        CSIColor left = a == null ? CSIColor.WHITE : a;
+        CSIColor right = b == null ? CSIColor.WHITE : b;
+        return left.equals(right);
+    }
+
+    private static void appendEscaped(StringBuilder out, char c) {
+        if (c == '&') {
+            out.append("&amp;");
+        } else if (c == '<') {
+            out.append("&lt;");
+        } else if (c == '>') {
+            out.append("&gt;");
+        } else {
+            out.append(c);
+        }
+    }
+
+    private static String toCssColor(CSIColor c) {
+        CSIColor color = c == null ? CSIColor.WHITE : c;
+        return "#" + hex(color.getR()) + hex(color.getG()) + hex(color.getB());
+    }
+
+    private static String hex(int value) {
+        final char[] chars = "0123456789abcdef".toCharArray();
+        int v = Math.max(0, Math.min(255, value));
+        return String.valueOf(new char[]{chars[(v >> 4) & 0xF], chars[v & 0xF]});
+    }
+
+    @JSBody(params = "html", script = "var el = document.getElementById('quarker-screen'); if (el) el.innerHTML = html;")
+    private static native void setScreenHtml(String html);
 
     @JSBody(params = "text", script = "var el = document.getElementById('status'); if (el) el.textContent = text;")
     private static native void setStatus(String text);
