@@ -14,6 +14,7 @@ DIST_ROOT := $(BUILD_DIR)/dist
 ARTIFACTS_DIR := $(BUILD_DIR)/artifacts
 NATIVE_ROOT := $(BUILD_DIR)/native
 WEB_ROOT := $(BUILD_DIR)/web
+PAGES_DIR := $(BUILD_DIR)/pages
 WIN_JPACKAGE ?= jpackage.exe
 PYTHON ?= /home/rogue/code/quarker/.venv/bin/python
 WEB_JAVA_RELEASE := 17
@@ -35,7 +36,7 @@ WEB_DIR := $(WEB_ROOT)/$(DIST_NAME)
 
 JAVA_FILES := $(shell find $(SRC_DIR) -name '*.java' | sort)
 
-.PHONY: help clean build run jar build-web-classes web web-serve package-web package package-all package-native package-native-current package-native-linux package-native-macos package-native-windows package-native-wsl release-artifacts
+.PHONY: help clean build run jar build-web-classes web pages web-serve package-web package package-all package-native package-native-current package-native-linux package-native-macos package-native-windows package-native-wsl release-artifacts
 
 help:
 	@echo "Targets:"
@@ -43,6 +44,7 @@ help:
 	@echo "  make run              Build and run the game locally"
 	@echo "  make jar              Build runnable JAR"
 	@echo "  make web              Build browser bundle via TeaVM (open-source, self-hosted)"
+	@echo "  make pages            Stage a GitHub Pages-ready web bundle"
 	@echo "  make web-serve        Build browser bundle and serve locally"
 	@echo "  make package-web      Build browser ZIP release bundle"
 	@echo "  make package          Build ZIP and TAR.GZ release bundles"
@@ -106,6 +108,13 @@ web: build-web-classes $(MAVEN)
 	cp -R src/web/. "$(WEB_DIR)/"
 	printf '%s\n' "$(VERSION)" > "$(WEB_DIR)/version.txt"
 	printf '%s\n' "Web bundle created in $(WEB_DIR)"
+
+pages: web
+	rm -rf "$(PAGES_DIR)"
+	mkdir -p "$(PAGES_DIR)"
+	cp -R "$(WEB_DIR)/." "$(PAGES_DIR)/"
+	touch "$(PAGES_DIR)/.nojekyll"
+	printf '%s\n' "Pages bundle staged in $(PAGES_DIR)"
 
 web-serve: web
 	$(PYTHON) scripts/web_server.py --directory "$(WEB_DIR)" --port 8000
