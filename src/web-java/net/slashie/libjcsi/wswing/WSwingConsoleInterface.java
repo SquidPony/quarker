@@ -240,12 +240,12 @@ public class WSwingConsoleInterface {
         return String.valueOf(new char[]{chars[(v >> 4) & 0xF], chars[v & 0xF]});
     }
 
-        @JSBody(params = "html", script = "var root = document.querySelector('[data-quarker-root]') || document;"
+    @JSBody(params = "html", script = "var root = document.querySelector('[data-quarker-root]') || document;"
             + "var el = root.querySelector('[data-quarker-screen]') || document.getElementById('quarker-screen');"
             + "if (el) { el.innerHTML = html; }")
     private static native void setScreenHtml(String html);
 
-        @JSBody(params = "text", script = "var root = document.querySelector('[data-quarker-root]') || document;"
+    @JSBody(params = "text", script = "var root = document.querySelector('[data-quarker-root]') || document;"
             + "var el = root.querySelector('[data-quarker-status]') || document.getElementById('status');"
             + "if (el) { el.textContent = text; }")
     private static native void setStatus(String text);
@@ -264,7 +264,7 @@ public class WSwingConsoleInterface {
         } while (true);
     }
 
-        @JSBody(script = "var root = document.querySelector('[data-quarker-root]') || document;"
+    @JSBody(script = "var root = document.querySelector('[data-quarker-root]') || document;"
             + "if (!root.__quarkerInputQueue) { root.__quarkerInputQueue = []; }"
             + "if (!root.__quarkerInputBound) {"
             + "root.__quarkerInputBound = true;"
@@ -282,7 +282,7 @@ public class WSwingConsoleInterface {
             + "}")
     private static native void initInputQueue();
 
-        @JSBody(script = "var root = document.querySelector('[data-quarker-root]') || document;"
+    @JSBody(script = "var root = document.querySelector('[data-quarker-root]') || document;"
             + "var q = root.__quarkerInputQueue;"
             + "if (!q || q.length === 0) { return ''; }"
             + "return String(q.shift());")
